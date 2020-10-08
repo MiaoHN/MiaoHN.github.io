@@ -6,7 +6,7 @@
   <link href="http://example.com/atom.xml" rel="self"/>
   
   <link href="http://example.com/"/>
-  <updated>2020-09-21T03:34:41.540Z</updated>
+  <updated>2020-10-08T07:28:56.637Z</updated>
   <id>http://example.com/</id>
   
   <author>
@@ -15,6 +15,77 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>每个人都是孤独的</title>
+    <link href="http://example.com/2020/10/08/%E6%AF%8F%E4%B8%AA%E4%BA%BA%E9%83%BD%E6%98%AF%E5%AD%A4%E7%8B%AC%E7%9A%84/"/>
+    <id>http://example.com/2020/10/08/%E6%AF%8F%E4%B8%AA%E4%BA%BA%E9%83%BD%E6%98%AF%E5%AD%A4%E7%8B%AC%E7%9A%84/</id>
+    <published>2020-10-08T06:43:54.000Z</published>
+    <updated>2020-10-08T07:28:56.637Z</updated>
+    
+    <content type="html"><![CDATA[<blockquote><p>皎洁的月光</p><p>请洁净我</p><p>洗净年月泼的墨</p><p>熄灭我吞下的烟火</p><p>​                                        —《孤独》邓紫棋</p></blockquote><p>很长的一段时间，直到现在，我一直觉得我只有可能是孤身一人。得到的终会失去，拥有的终会消失。这个世界上没有什么东西能够让我守候。我惶恐过，我绝望过，甚至手足无措，不知道究竟该怎么办。那段时间真的是过的很绝望呀。其实，随着时间的推移，我好像也习惯了吧，孤独是人的本质，我是不可能想办法摆脱它的。</p><p>这两天好烦呀，我感觉我的世界有点冷冰冰的。我和爸爸之间没有一点共同语言，不管干啥还是在哪里，爸爸嘴里只有学习。以前是高考，现在是考研，不管是为了找话题还是啥，反正就是老说。我承认我的想法不够理性，可我现在就是想放纵自己讨厌爸爸，我实在有点受不了这样过着。我是知道爸爸小时候的经历，知道他受的苦受的累。没有接受过好的教育自然是想让下一代好好学习，可我现在觉得爸爸除了学习之外没有教给我其他任何东西。</p><p>有人可能会说我就是傻，怎么啥都不干还指望着让爸爸教我啥，觉得我头不合适，没错我就是头不合适。我从来都没有觉得家里的氛围让我感觉非常的好。总是欠点什么。10月2号是我20岁的生日，家里总共有8个人（有个婴儿），怎么说，我宁愿自己一个人过生日也不想有人陪我过生日。国庆这7天天天呆在家里打游戏，我会觉得自己很可恶吗？没有吧，家里的氛围怎么能让我好好学，我就是理由多怎么了？我就是想堕落了有人能管得了我吗？</p><p>我从来都没想过未来我要干什么。有那么一段时间我是真的觉得未来是虚无缥缈的，幻想未来还不如好好的活在当下（虽然我能感觉我的想法有不小问题）。我现在满脑子都是一两年后考研的事，可我现在又不太想考研。不如去看一场解解的演唱会？好像也没什么欲望，奇怪的很。</p><p>解解出了新歌《孤独》，这首歌的词写的挺好的，有意境有深度。曲子有月光的影子，鼓点也很突出。我似乎还没有get到点上，再听一听应该就上头了。应该会有很多人听完都会感同身受吧。其实我们都一样，都会有孤独的时候。每个人都是孤独的，而当你夜不能寐时能够想到有很多人也像你一样睡不着，你应该不会感觉有那么孤单了吧。</p>]]></content>
+    
+    
+      
+      
+    <summary type="html">&lt;blockquote&gt;
+&lt;p&gt;皎洁的月光&lt;/p&gt;
+&lt;p&gt;请洁净我&lt;/p&gt;
+&lt;p&gt;洗净年月泼的墨&lt;/p&gt;
+&lt;p&gt;熄灭我吞下的烟火&lt;/p&gt;
+&lt;p&gt;​                                        —《孤独》邓紫棋&lt;/p&gt;
+&lt;/blockquote&gt;
+</summary>
+      
+    
+    
+    
+    <category term="随笔" scheme="http://example.com/categories/%E9%9A%8F%E7%AC%94/"/>
+    
+    
+  </entry>
+  
+  <entry>
+    <title>第8章 IO库</title>
+    <link href="http://example.com/2020/10/01/%E7%AC%AC8%E7%AB%A0-IO%E5%BA%93/"/>
+    <id>http://example.com/2020/10/01/%E7%AC%AC8%E7%AB%A0-IO%E5%BA%93/</id>
+    <published>2020-10-01T08:51:28.000Z</published>
+    <updated>2020-10-01T09:17:46.030Z</updated>
+    
+    <content type="html"><![CDATA[<h1 id="8-1-IO类"><a href="#8-1-IO类" class="headerlink" title="8.1 IO类"></a>8.1 IO类</h1><p>IO库类型和头文件</p><table><thead><tr><th>头文件</th><th>类型</th></tr></thead><tbody><tr><td>iostream</td><td>istream，wistream从流读取数据<br>ostream，wostream向流写入数据<br>iostream，wiostream读写流</td></tr><tr><td>fstream</td><td>ifstream，wifstream从文件读取数据<br>ofstream，wofstream向文件写入数据<br>fstream，wfstream读写文件</td></tr><tr><td>sstream</td><td>istringstream，wistringstream从string读取数据<br>ostringstream，wostringstream向string写入数据<br>stringstream，wstringstream读写string</td></tr></tbody></table><h2 id="1，IO对象无拷贝或赋值"><a href="#1，IO对象无拷贝或赋值" class="headerlink" title="1，IO对象无拷贝或赋值"></a>1，IO对象无拷贝或赋值</h2><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">ofstream out1, out2;</span><br><span class="line">out1 = out2;<span class="comment">// 错误：：不能对流对象赋值</span></span><br><span class="line"><span class="function">ofstream <span class="title">print</span><span class="params">(ofstream)</span></span>;<span class="comment">// 错误：不能初始化ofstream参数</span></span><br><span class="line">out2 = print(out2)<span class="comment">// 错误：不能拷贝流对象</span></span><br></pre></td></tr></table></figure><p>由于不能拷贝IO对象，因此我们也==不能将形参或返回类型设置为流类型==。</p><p>进行IO操作的函数==通常以引用方式传递和返回流==。且传递和返回的引用不能是const的。</p><h2 id="2，条件状态"><a href="#2，条件状态" class="headerlink" title="2，条件状态"></a>2，条件状态</h2><table><thead><tr><th>strm::iostate</th><th>（strm是一种IO类型）iostate是一种机器相关的类型，提供了表达条件状态的完整功能</th></tr></thead><tbody><tr><td>strm::badbit</td><td>用来指出流已崩溃</td></tr><tr><td>strm::failbit</td><td>用来指出一个IO操作失败了</td></tr><tr><td>strm::eofbit</td><td>用来指出流到达了文件结束</td></tr><tr><td>strm::goodbit</td><td>用来指出流未处于错误状态。此值保证为零</td></tr><tr><td>s.eof()</td><td>若流s的eofbit置位</td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr></tbody></table>]]></content>
+    
+    
+      
+      
+    <summary type="html">&lt;h1 id=&quot;8-1-IO类&quot;&gt;&lt;a href=&quot;#8-1-IO类&quot; class=&quot;headerlink&quot; title=&quot;8.1 IO类&quot;&gt;&lt;/a&gt;8.1 IO类&lt;/h1&gt;&lt;p&gt;IO库类型和头文件&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;头文件&lt;/th&gt;
+&lt;t</summary>
+      
+    
+    
+    
+    <category term="C++ Primer" scheme="http://example.com/categories/C-Primer/"/>
+    
+    
+    <category term="C++" scheme="http://example.com/tags/C/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>第7章 类</title>
+    <link href="http://example.com/2020/09/27/%E7%AC%AC7%E7%AB%A0-%E7%B1%BB/"/>
+    <id>http://example.com/2020/09/27/%E7%AC%AC7%E7%AB%A0-%E7%B1%BB/</id>
+    <published>2020-09-27T10:59:47.000Z</published>
+    <updated>2020-09-27T10:59:47.737Z</updated>
+    
+    
+    
+    
+    
+  </entry>
   
   <entry>
     <title>Test</title>

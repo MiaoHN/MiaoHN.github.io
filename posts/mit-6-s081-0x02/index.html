@@ -1,0 +1,410 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta content="width=device-width,initial-scale=1.0" name=viewport><meta content="light dark" name=color-scheme><title>MIT 6.S081 | 0x02 System calls</title><link href=/img/favicon-32x32.png rel=icon sizes=32x32 type=image/png><link href=/img/favicon-16x16.png rel=icon sizes=16x16 type=image/png><link href=/img/apple-touch-icon.png rel=apple-touch-icon sizes=180x180><link href=https://fonts.googleapis.com rel=preconnect><link crossorigin href=https://fonts.gstatic.com rel=preconnect><link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&display=swap" rel=stylesheet><style>body{--primary-color:#5871a2;--primary-pale-color:#5871a210;--text-color:#3c4043;--text-pale-color:#94969f;--bg-color:#fff;--highlight-mark-color:#5f75b045;--callout-note-color:#5871a2;--callout-important-color:#8062b0;--callout-warning-color:#936e51;--callout-alert-color:#bc5252;--callout-question-color:#477389;--callout-tip-color:#3c8460;--main-font:"Lora",ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";--code-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;--homepage-max-width:768px;--main-max-width:768px;--avatar-size:60px;--icon-size:20px;--homepage-font-size:16px;--homepage-line-height:1.75;--paragraph-font-size:16px;--paragraph-line-height:1.75;--aside-font-size:15px;--img-border-radius:0;--callout-border-radius:0;--detail-border-radius:0;--dark-mode-img-brightness:.60;--dark-mode-chart-brightness:.75;--inline-code-border-radius:2px;--inline-code-bg-color:var(--primary-pale-color);--block-code-border-radius:5px;--block-code-border-color:var(--primary-color);--detail-border-color:var(--primary-color)}body.dark{--primary-color:#5d77ac;--primary-pale-color:#5d77ac20;--text-color:#9197a5;--text-pale-color:#747983;--bg-color:#202124;--highlight-mark-color:#5f75b045;--callout-note-color:#5d77ac;--callout-important-color:#8062b0;--callout-warning-color:#936e51;--callout-alert-color:#bc5252;--callout-question-color:#477389;--callout-tip-color:#3c8460}</style><link href=/main.css rel=stylesheet><link href=/hl-light.css id=hl rel=stylesheet><script>var host=window.location.host;if(host!="localhost"){var script=document.createElement('script');script.src="https://us.umami.is/script.js";script.async=true;script.dataset.websiteId="eac6652d-5acf-4760-90e8-a8ddb10e4b8d"}</script><script src=https://esm.sh/@stefanjudis/sparkly-text type=module></script><body class=post><script>const theme=sessionStorage.getItem('theme');const match=window.matchMedia("(prefers-color-scheme: dark)").matches;if(theme&&theme=='dark'||!theme&&match){document.body.classList.add('dark');const a=document.querySelector('link#hl');if(a)a.href='/hl-dark.css'}</script><header class=blur><div id=header-wrapper><nav><a class=instant href=/>matt</a><span class=separator>::</span><a class=instant href=/posts>posts</a></nav><div id=btns><a aria-label="rss feed" href=/posts/feed.xml id=rss-btn><svg viewbox="0 0 24 24" height=20 width=20 xmlns=http://www.w3.org/2000/svg><path d="M3 17C5.20914 17 7 18.7909 7 21H3V17ZM3 10C9.07513 10 14 14.9249 14 21H12C12 16.0294 7.97056 12 3 12V10ZM3 3C12.9411 3 21 11.0589 21 21H19C19 12.1634 11.8366 5 3 5V3Z" fill=currentColor></path></svg></a><button aria-label="theme switch" data-moon-icon='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20"><path d="M10 7C10 10.866 13.134 14 17 14C18.9584 14 20.729 13.1957 21.9995 11.8995C22 11.933 22 11.9665 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C12.0335 2 12.067 2 12.1005 2.00049C10.8043 3.27098 10 5.04157 10 7ZM4 12C4 16.4183 7.58172 20 12 20C15.0583 20 17.7158 18.2839 19.062 15.7621C18.3945 15.9187 17.7035 16 17 16C12.0294 16 8 11.9706 8 7C8 6.29648 8.08133 5.60547 8.2379 4.938C5.71611 6.28423 4 8.9417 4 12Z" fill="currentColor"></path></svg>' data-sun-icon='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20"><path d="M12 18C8.68629 18 6 15.3137 6 12C6 8.68629 8.68629 6 12 6C15.3137 6 18 8.68629 18 12C18 15.3137 15.3137 18 12 18ZM12 16C14.2091 16 16 14.2091 16 12C16 9.79086 14.2091 8 12 8C9.79086 8 8 9.79086 8 12C8 14.2091 9.79086 16 12 16ZM11 1H13V4H11V1ZM11 20H13V23H11V20ZM3.51472 4.92893L4.92893 3.51472L7.05025 5.63604L5.63604 7.05025L3.51472 4.92893ZM16.9497 18.364L18.364 16.9497L20.4853 19.0711L19.0711 20.4853L16.9497 18.364ZM19.0711 3.51472L20.4853 4.92893L18.364 7.05025L16.9497 5.63604L19.0711 3.51472ZM5.63604 16.9497L7.05025 18.364L4.92893 20.4853L3.51472 19.0711L5.63604 16.9497ZM23 11V13H20V11H23ZM4 11V13H1V11H4Z" fill="currentColor"></path></svg>' id=theme-toggle><svg viewbox="0 0 24 24" height=20 width=20 xmlns=http://www.w3.org/2000/svg><path d="M10 7C10 10.866 13.134 14 17 14C18.9584 14 20.729 13.1957 21.9995 11.8995C22 11.933 22 11.9665 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C12.0335 2 12.067 2 12.1005 2.00049C10.8043 3.27098 10 5.04157 10 7ZM4 12C4 16.4183 7.58172 20 12 20C15.0583 20 17.7158 18.2839 19.062 15.7621C18.3945 15.9187 17.7035 16 17 16C12.0294 16 8 11.9706 8 7C8 6.29648 8.08133 5.60547 8.2379 4.938C5.71611 6.28423 4 8.9417 4 12Z" fill=currentColor></path></svg></button><button aria-label="table of content" id=toc-toggle><svg viewbox="0 0 24 24" height=20 width=20 xmlns=http://www.w3.org/2000/svg><path d="M3 4H21V6H3V4ZM3 11H15V13H3V11ZM3 18H21V20H3V18Z" fill=currentColor></path></svg></button></div></div></header><dialog id=rss-mask><div><a href=https://miaohn.github.io/posts/feed.xml>https://miaohn.github.io/posts/feed.xml</a><button data-check-icon='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20"><path d="M10.0007 15.1709L19.1931 5.97852L20.6073 7.39273L10.0007 17.9993L3.63672 11.6354L5.05093 10.2212L10.0007 15.1709Z" fill="currentColor"></path></svg>' data-copy-icon='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20"><path d="M6.9998 6V3C6.9998 2.44772 7.44752 2 7.9998 2H19.9998C20.5521 2 20.9998 2.44772 20.9998 3V17C20.9998 17.5523 20.5521 18 19.9998 18H16.9998V20.9991C16.9998 21.5519 16.5499 22 15.993 22H4.00666C3.45059 22 3 21.5554 3 20.9991L3.0026 7.00087C3.0027 6.44811 3.45264 6 4.00942 6H6.9998ZM5.00242 8L5.00019 20H14.9998V8H5.00242ZM8.9998 6H16.9998V16H18.9998V4H8.9998V6Z" fill="currentColor"></path></svg>' aria-label=copy autofocus data-link=https://miaohn.github.io/posts/feed.xml><svg viewbox="0 0 24 24" height=20 width=20 xmlns=http://www.w3.org/2000/svg><path d="M6.9998 6V3C6.9998 2.44772 7.44752 2 7.9998 2H19.9998C20.5521 2 20.9998 2.44772 20.9998 3V17C20.9998 17.5523 20.5521 18 19.9998 18H16.9998V20.9991C16.9998 21.5519 16.5499 22 15.993 22H4.00666C3.45059 22 3 21.5554 3 20.9991L3.0026 7.00087C3.0027 6.44811 3.45264 6 4.00942 6H6.9998ZM5.00242 8L5.00019 20H14.9998V8H5.00242ZM8.9998 6H16.9998V16H18.9998V4H8.9998V6Z" fill=currentColor></path></svg></button></div></dialog><div id=wrapper><div id=blank></div><aside><nav><ul><li><a class=h2 href=#system-call-tracing>🟦 System call tracing</a> <ul><li><a class=h3 href=#fen-xi>分析</a><li><a class=h3 href=#dai-ma>代码</a></ul><li><a class=h2 href=#sysinfo>🟦 Sysinfo</a> <ul><li><a class=h3 href=#fen-xi-1>分析</a><li><a class=h3 href=#dai-ma-1>代码</a></ul></ul></nav><button aria-label="back to top" id=back-to-top><svg viewbox="0 0 24 24" height=24 width=24 xmlns=http://www.w3.org/2000/svg><path d="M11.9997 10.8284L7.04996 15.7782L5.63574 14.364L11.9997 8L18.3637 14.364L16.9495 15.7782L11.9997 10.8284Z" fill=currentColor></path></svg></button></aside><main><div><div data-check-icon='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20"><path d="M10.0007 15.1709L19.1931 5.97852L20.6073 7.39273L10.0007 17.9993L3.63672 11.6354L5.05093 10.2212L10.0007 15.1709Z" fill="currentColor"></path></svg>' data-copy-icon='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20"><path d="M6.9998 6V3C6.9998 2.44772 7.44752 2 7.9998 2H19.9998C20.5521 2 20.9998 2.44772 20.9998 3V17C20.9998 17.5523 20.5521 18 19.9998 18H16.9998V20.9991C16.9998 21.5519 16.5499 22 15.993 22H4.00666C3.45059 22 3 21.5554 3 20.9991L3.0026 7.00087C3.0027 6.44811 3.45264 6 4.00942 6H6.9998ZM5.00242 8L5.00019 20H14.9998V8H5.00242ZM8.9998 6H16.9998V16H18.9998V4H8.9998V6Z" fill="currentColor"></path></svg>' id=copy-cfg style=display:none></div><article data-backlink-icon='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20"><path d="M9.41421 8L18.0208 16.6066L16.6066 18.0208L8 9.41421V17H6V6H17V8H9.41421Z" fill="currentColor"></path></svg>' class=prose><h1>MIT 6.S081 | 0x02 System calls</h1><div id=post-info><div id=date><span id=publish>2023-12-02</span></div><div id=tags><a class=instant href=https://miaohn.github.io/tags/labs><span>#</span>labs</a></div></div><blockquote class="callout alert hidden" data-alert-text-after=" days ago and may be out of date." data-alert-text-before="This article was last updated " data-days=120 id=outdate_alert><div class=icon><svg viewbox="0 0 24 24" height=20 width=20 xmlns=http://www.w3.org/2000/svg><path d="M4.00098 20V14C4.00098 9.58172 7.5827 6 12.001 6C16.4193 6 20.001 9.58172 20.001 14V20H21.001V22H3.00098V20H4.00098ZM6.00098 20H18.001V14C18.001 10.6863 15.3147 8 12.001 8C8.68727 8 6.00098 10.6863 6.00098 14V20ZM11.001 2H13.001V5H11.001V2ZM19.7792 4.80761L21.1934 6.22183L19.0721 8.34315L17.6578 6.92893L19.7792 4.80761ZM2.80859 6.22183L4.22281 4.80761L6.34413 6.92893L4.92991 8.34315L2.80859 6.22183ZM7.00098 14C7.00098 11.2386 9.23956 9 12.001 9V11C10.3441 11 9.00098 12.3431 9.00098 14H7.00098Z" fill=currentColor></path></svg></div><div class=content></div></blockquote><ul><li>链接：<a rel="noopener nofollow noreferrer" href=https://pdos.csail.mit.edu/6.S081/2021/labs/syscall.html target=_blank>https://pdos.csail.mit.edu/6.S081/2021/labs/syscall.html</a><li>难度：🟦🟦</ul><blockquote class="callout tip"><div class=icon><svg viewbox="0 0 24 24" height=20 width=20 xmlns=http://www.w3.org/2000/svg><path d="M9.97308 18H11V13H13V18H14.0269C14.1589 16.7984 14.7721 15.8065 15.7676 14.7226C15.8797 14.6006 16.5988 13.8564 16.6841 13.7501C17.5318 12.6931 18 11.385 18 10C18 6.68629 15.3137 4 12 4C8.68629 4 6 6.68629 6 10C6 11.3843 6.46774 12.6917 7.31462 13.7484C7.40004 13.855 8.12081 14.6012 8.23154 14.7218C9.22766 15.8064 9.84103 16.7984 9.97308 18ZM10 20V21H14V20H10ZM5.75395 14.9992C4.65645 13.6297 4 11.8915 4 10C4 5.58172 7.58172 2 12 2C16.4183 2 20 5.58172 20 10C20 11.8925 19.3428 13.6315 18.2443 15.0014C17.624 15.7748 16 17 16 18.5V21C16 22.1046 15.1046 23 14 23H10C8.89543 23 8 22.1046 8 21V18.5C8 17 6.37458 15.7736 5.75395 14.9992Z" fill=currentColor></path></svg></div><div class=content><p>Before you start coding, read Chapter 2 of the <a rel="noopener nofollow noreferrer" href=https://pdos.csail.mit.edu/6.S081/2020/xv6/book-riscv-rev1.pdf target=_blank>xv6 book</a>, and Sections 4.3 and 4.4 of Chapter 4, and related source files:<ul><li>The user-space code for systems calls is in <code>user/user.h</code> and <code>user/usys.pl</code>.<li>The kernel-space code is <code>kernel/syscall.h</code>, <code>kernel/syscall.c</code>.<li>The process-related code is <code>kernel/proc.h</code> and <code>kernel/proc.c</code>.</ul></div></blockquote><h2 id=system-call-tracing>🟦 System call tracing<a aria-label="Anchor link for: system-call-tracing" class=zola-anchor href=#system-call-tracing style=visibility:hidden>#</a></h2><blockquote><p>In this assignment you will add a system call tracing feature that may help you when debugging later labs. You’ll create a new <code>trace</code> system call that will control tracing. It should take one argument, an integer “mask”, whose bits specify which system calls to trace. For example, to trace the fork system call, a program calls <code>trace(1 << SYS_fork)</code>, where <code>SYS_fork</code> is a syscall number from <code>kernel/syscall.h</code>. You have to modify the xv6 kernel to print out a line when each system call is about to return, if the system call’s number is set in the mask. The line should contain the process id, the name of the system call and the return value; you don’t need to print the system call arguments. The <code>trace</code> system call should enable tracing for the process that calls it and any children that it subsequently forks, but should not affect other processes.</blockquote><h3 id=fen-xi>分析<a aria-label="Anchor link for: fen-xi" class=zola-anchor href=#fen-xi style=visibility:hidden>#</a></h3><p>这个任务的主要目的是让我们学习如何创建一个系统调用，同时通过实现 <code>trace</code> 这个调用让我们理解系统调用的整体流程。代码量不大，但也足够精巧。根据实验提示和简单的代码阅读，我们可以知道在系统调用时操作系统大体做了如下几件事：<ol><li><p>触发中断，执行 <code>syscall()</code> 函数（<code>kernel/trap.c:67</code>）</p><li><p><code>syscall()</code> 函数（<code>kernel/syscall.c:162</code>）根据中断号从中断表（<code>kernel/syscall.c:109</code>）中找到对应的函数入口执行对应的系统调用</p> <div class=codeblock-with-filename><div class=filename>kernel/syscall.c:162</div><pre class="language-c z-code" data-lang=c><code class=language-c data-lang=c><span class="z-source z-c">    <span class="z-storage z-type z-c">void</span>
+    <span class="z-meta z-function z-c"><span class="z-entity z-name z-function z-c">syscall</span></span><span class="z-meta z-function z-parameters z-c"><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span></span></span><span class="z-meta z-function z-parameters z-c"><span class="z-meta z-group z-c"><span class="z-storage z-type z-c">void</span><span class="z-punctuation z-section z-group z-end z-c">)</span></span></span><span class="z-meta z-function z-c">
+    </span><span class="z-meta z-function z-c"><span class="z-meta z-block z-c"><span class="z-punctuation z-section z-block z-begin z-c">{</span></span></span><span class="z-meta z-function z-c"><span class="z-meta z-block z-c">
+      <span class="z-storage z-type z-c">int</span> num<span class="z-punctuation z-terminator z-c">;</span>
+      <span class="z-storage z-type z-c">struct</span> proc <span class="z-keyword z-operator z-c">*</span>p <span class="z-keyword z-operator z-assignment z-c">=</span> <span class="z-meta z-function-call z-c"><span class="z-variable z-function z-c">myproc</span><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span></span></span><span class="z-meta z-function-call z-c"></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-end z-c">)</span></span></span><span class="z-punctuation z-terminator z-c">;</span>
+ 
+      num <span class="z-keyword z-operator z-assignment z-c">=</span> p<span class="z-punctuation z-accessor z-c">-></span>trapframe<span class="z-punctuation z-accessor z-c">-></span>a7<span class="z-punctuation z-terminator z-c">;</span>
+      <span class="z-keyword z-control z-c">if</span><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span>num <span class="z-keyword z-operator z-comparison z-c">></span> <span class="z-constant z-numeric z-integer z-decimal z-c">0</span> <span class="z-keyword z-operator z-arithmetic z-c">&&</span> num <span class="z-keyword z-operator z-comparison z-c"><</span> <span class="z-meta z-function-call z-c"><span class="z-variable z-function z-c">NELEM</span><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span></span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c">syscalls</span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-end z-c">)</span></span></span> <span class="z-keyword z-operator z-arithmetic z-c">&&</span> syscalls<span class="z-meta z-brackets z-c"><span class="z-punctuation z-section z-brackets z-begin z-c">[</span>num<span class="z-punctuation z-section z-brackets z-end z-c">]</span></span><span class="z-punctuation z-section z-group z-end z-c">)</span></span> <span class="z-meta z-block z-c"><span class="z-punctuation z-section z-block z-begin z-c">{</span>
+        <span class="z-comment z-line z-double-slash z-c"><span class="z-punctuation z-definition z-comment z-c">//</span> Use num to lookup the system call function for num, call it,
+</span>        <span class="z-comment z-line z-double-slash z-c"><span class="z-punctuation z-definition z-comment z-c">//</span> and store its return value in p->trapframe->a0
+</span>        p<span class="z-punctuation z-accessor z-c">-></span>trapframe<span class="z-punctuation z-accessor z-c">-></span>a0 <span class="z-keyword z-operator z-assignment z-c">=</span> syscalls<span class="z-meta z-brackets z-c"><span class="z-punctuation z-section z-brackets z-begin z-c">[</span>num<span class="z-punctuation z-section z-brackets z-end z-c">]</span></span><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span><span class="z-punctuation z-section z-group z-end z-c">)</span></span><span class="z-punctuation z-terminator z-c">;</span>
+      <span class="z-punctuation z-section z-block z-end z-c">}</span></span> <span class="z-keyword z-control z-c">else</span> <span class="z-meta z-block z-c"><span class="z-punctuation z-section z-block z-begin z-c">{</span>
+        <span class="z-meta z-function-call z-c"><span class="z-support z-function z-C99 z-c">printf</span><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span></span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c"><span class="z-string z-quoted z-double z-c"><span class="z-punctuation z-definition z-string z-begin z-c">"</span><span class="z-constant z-other z-placeholder z-c">%d</span> <span class="z-constant z-other z-placeholder z-c">%s</span>: unknown sys call <span class="z-constant z-other z-placeholder z-c">%d</span><span class="z-constant z-character z-escape z-c">\n</span><span class="z-punctuation z-definition z-string z-end z-c">"</span></span><span class="z-punctuation z-separator z-c">,</span>
+                p<span class="z-punctuation z-accessor z-c">-></span>pid<span class="z-punctuation z-separator z-c">,</span> p<span class="z-punctuation z-accessor z-c">-></span>name<span class="z-punctuation z-separator z-c">,</span> num</span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-end z-c">)</span></span></span><span class="z-punctuation z-terminator z-c">;</span>
+        p<span class="z-punctuation z-accessor z-c">-></span>trapframe<span class="z-punctuation z-accessor z-c">-></span>a0 <span class="z-keyword z-operator z-assignment z-c">=</span> <span class="z-keyword z-operator z-arithmetic z-c">-</span><span class="z-constant z-numeric z-integer z-decimal z-c">1</span><span class="z-punctuation z-terminator z-c">;</span>
+      <span class="z-punctuation z-section z-block z-end z-c">}</span></span>
+    </span></span><span class="z-meta z-function z-c"><span class="z-meta z-block z-c"><span class="z-punctuation z-section z-block z-end z-c">}</span></span></span>
+    ```</span></code></pre></div></ol><p>接下来的思路就很直接，要想 trace 系统调用，只需要在执行 <code>syscall</code> 时输出相应的调用名即可。现在剩下几个步骤/小问题：<ol><li>题目中给了提示，要我们在 <code>struct proc</code> 中维护一个 mask 来使用 <code>trace</code> 功能。这个 mask 在创建进程时初始化，在 <code>syscall</code> 时如果为零则不打印相关信息，否则判断当前的系统调用号是否在 mask 中来判断是否打印信息<li><code>fork</code> 后的子进程是否进行 <code>trace</code> 由其父进程决定。所以在创建新进程时，只需将父进程的 <code>mask</code> 赋值给子进程<li>这个 <code>mask</code> 是不需要重新设为 0 的，因为 <code>trace</code> 只对目标进程设置 <code>mask</code>，该进程结束时也不会对其他进程产生影响</ol><h3 id=dai-ma>代码<a aria-label="Anchor link for: dai-ma" class=zola-anchor href=#dai-ma style=visibility:hidden>#</a></h3><pre class="language-diff z-code" data-lang=diff><code class=language-diff data-lang=diff><span class="z-source z-diff">diff --git a/Makefile b/Makefile
+index ded5bc2..97e2954 100644
+<span class="z-meta z-diff z-header z-from-file"><span class="z-meta z-header z-from-file z-diff"><span class="z-punctuation z-definition z-from-file z-diff">---</span> a/Makefile
+</span></span><span class="z-meta z-diff z-header z-to-file"><span class="z-meta z-header z-to-file z-diff"><span class="z-punctuation z-definition z-to-file z-diff">+++</span> b/Makefile
+</span></span><span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-184,6 +184,7</span> <span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-entity z-name z-section z-diff">UPROGS=\</span>
+</span></span>  $U/_rm\
+  $U/_sh\
+  $U/_stressfs\
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span> $U/_trace\
+</span>  $U/_usertests\
+  $U/_grind\
+  $U/_wc\
+diff --git a/kernel/proc.c b/kernel/proc.c
+index 959b778..d7cefdb 100644
+<span class="z-meta z-diff z-header z-from-file"><span class="z-meta z-header z-from-file z-diff"><span class="z-punctuation z-definition z-from-file z-diff">---</span> a/kernel/proc.c
+</span></span><span class="z-meta z-diff z-header z-to-file"><span class="z-meta z-header z-to-file z-diff"><span class="z-punctuation z-definition z-to-file z-diff">+++</span> b/kernel/proc.c
+</span></span><span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-124,6 +124,7</span> <span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-entity z-name z-section z-diff">allocproc(void)</span>
+</span></span> found:
+   p->pid = allocpid();
+   p->state = USED;
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  p->tracemask = 0;
+</span> 
+   // Allocate a trapframe page.
+   if((p->trapframe = (struct trapframe *)kalloc()) == 0){
+<span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-312,6 +313,8</span> <span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-entity z-name z-section z-diff">fork(void)</span>
+</span></span> 
+   pid = np->pid;
+ 
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  np->tracemask = p->tracemask;
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>
+</span>   release(&np->lock);
+ 
+   acquire(&wait_lock);
+diff --git a/kernel/proc.h b/kernel/proc.h
+index d021857..aeb6cf0 100644
+<span class="z-meta z-diff z-header z-from-file"><span class="z-meta z-header z-from-file z-diff"><span class="z-punctuation z-definition z-from-file z-diff">---</span> a/kernel/proc.h
+</span></span><span class="z-meta z-diff z-header z-to-file"><span class="z-meta z-header z-to-file z-diff"><span class="z-punctuation z-definition z-to-file z-diff">+++</span> b/kernel/proc.h
+</span></span><span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-91,6 +91,7</span> <span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-entity z-name z-section z-diff">struct proc {</span>
+</span></span>   int killed;                  // If non-zero, have been killed
+   int xstate;                  // Exit status to be returned to parent's wait
+   int pid;                     // Process ID
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  int tracemask;
+</span> 
+   // wait_lock must be held when using this:
+   struct proc *parent;         // Parent process
+diff --git a/kernel/syscall.c b/kernel/syscall.c
+index ed65409..873793a 100644
+<span class="z-meta z-diff z-header z-from-file"><span class="z-meta z-header z-from-file z-diff"><span class="z-punctuation z-definition z-from-file z-diff">---</span> a/kernel/syscall.c
+</span></span><span class="z-meta z-diff z-header z-to-file"><span class="z-meta z-header z-to-file z-diff"><span class="z-punctuation z-definition z-to-file z-diff">+++</span> b/kernel/syscall.c
+</span></span><span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-101,6 +101,7</span> <span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-entity z-name z-section z-diff">extern uint64 sys_unlink(void);</span>
+</span></span> extern uint64 sys_link(void);
+ extern uint64 sys_mkdir(void);
+ extern uint64 sys_close(void);
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>extern uint64 sys_trace(void);
+</span> 
+ // An array mapping syscall numbers from syscall.h
+ // to the function that handles the system call.
+<span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-126,6 +127,32</span> <span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-entity z-name z-section z-diff">static uint64 (*syscalls[])(void) = {</span>
+</span></span> [SYS_link]    sys_link,
+ [SYS_mkdir]   sys_mkdir,
+ [SYS_close]   sys_close,
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>[SYS_trace]   sys_trace,
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>};
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>static const char* sysnames[] = {
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>[SYS_fork]    "fork",
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>[SYS_exit]    "exit",
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>[SYS_wait]    "wait",
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>[SYS_pipe]    "pipe",
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>[SYS_read]    "read",
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>[SYS_kill]    "kill",
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>[SYS_exec]    "exec",
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>[SYS_fstat]   "fstat",
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>[SYS_chdir]   "chdir",
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>[SYS_dup]     "dup",
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>[SYS_getpid]  "getpid",
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>[SYS_sbrk]    "sbrk",
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>[SYS_sleep]   "sleep",
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>[SYS_uptime]  "uptime",
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>[SYS_open]    "open",
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>[SYS_write]   "write",
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>[SYS_mknod]   "mknod",
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>[SYS_unlink]  "unlink",
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>[SYS_link]    "link",
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>[SYS_mkdir]   "mkdir",
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>[SYS_close]   "close",
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>[SYS_trace]   "trace",
+</span> };
+ 
+ void
+<span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-139,6 +166,11</span> <span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-entity z-name z-section z-diff">syscall(void)</span>
+</span></span>     // Use num to lookup the system call function for num, call it,
+     // and store its return value in p->trapframe->a0
+     p->trapframe->a0 = syscalls[num]();
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>    if ((1 << num) & p->tracemask) {
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>      int pid = p->pid;
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>      int ret = p->trapframe->a0;
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>      printf("%d: syscall %s -> %d\n", pid, sysnames[num], ret);
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>    }
+</span>   } else {
+     printf("%d %s: unknown sys call %d\n",
+             p->pid, p->name, num);
+diff --git a/kernel/syscall.h b/kernel/syscall.h
+index bc5f356..cc112b9 100644
+<span class="z-meta z-diff z-header z-from-file"><span class="z-meta z-header z-from-file z-diff"><span class="z-punctuation z-definition z-from-file z-diff">---</span> a/kernel/syscall.h
+</span></span><span class="z-meta z-diff z-header z-to-file"><span class="z-meta z-header z-to-file z-diff"><span class="z-punctuation z-definition z-to-file z-diff">+++</span> b/kernel/syscall.h
+</span></span><span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-20,3 +20,4</span> <span class="z-punctuation z-definition z-range z-diff">@@</span>
+</span></span> #define SYS_link   19
+ #define SYS_mkdir  20
+ #define SYS_close  21
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>#define SYS_trace  22
+</span>diff --git a/kernel/sysproc.c b/kernel/sysproc.c
+index 3b4d5bd..ce17950 100644
+<span class="z-meta z-diff z-header z-from-file"><span class="z-meta z-header z-from-file z-diff"><span class="z-punctuation z-definition z-from-file z-diff">---</span> a/kernel/sysproc.c
+</span></span><span class="z-meta z-diff z-header z-to-file"><span class="z-meta z-header z-to-file z-diff"><span class="z-punctuation z-definition z-to-file z-diff">+++</span> b/kernel/sysproc.c
+</span></span><span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-11,6 +11,7</span> <span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-entity z-name z-section z-diff">sys_exit(void)</span>
+</span></span> {
+   int n;
+   argint(0, &n);
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  myproc()->tracemask = 0;
+</span>   exit(n);
+   return 0;  // not reached
+ }
+<span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-91,3 +92,16</span> <span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-entity z-name z-section z-diff">sys_uptime(void)</span>
+</span></span>   release(&tickslock);
+   return xticks;
+ }
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>uint64
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>sys_trace(void)
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>{
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  int mask;
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  argint(0, &mask);
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  // TODO
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  myproc()->tracemask = mask;
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  return 0;
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>}
+</span>diff --git a/user/user.h b/user/user.h
+index 4d398d5..0bf4333 100644
+<span class="z-meta z-diff z-header z-from-file"><span class="z-meta z-header z-from-file z-diff"><span class="z-punctuation z-definition z-from-file z-diff">---</span> a/user/user.h
+</span></span><span class="z-meta z-diff z-header z-to-file"><span class="z-meta z-header z-to-file z-diff"><span class="z-punctuation z-definition z-to-file z-diff">+++</span> b/user/user.h
+</span></span><span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-22,6 +22,7</span> <span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-entity z-name z-section z-diff">int getpid(void);</span>
+</span></span> char* sbrk(int);
+ int sleep(int);
+ int uptime(void);
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>int trace(int);
+</span> 
+ // ulib.c
+ int stat(const char*, struct stat*);
+diff --git a/user/usys.pl b/user/usys.pl
+index 01e426e..9c97b05 100755
+<span class="z-meta z-diff z-header z-from-file"><span class="z-meta z-header z-from-file z-diff"><span class="z-punctuation z-definition z-from-file z-diff">---</span> a/user/usys.pl
+</span></span><span class="z-meta z-diff z-header z-to-file"><span class="z-meta z-header z-to-file z-diff"><span class="z-punctuation z-definition z-to-file z-diff">+++</span> b/user/usys.pl
+</span></span><span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-36,3 +36,4</span> <span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-entity z-name z-section z-diff">entry("getpid");</span>
+</span></span> entry("sbrk");
+ entry("sleep");
+ entry("uptime");
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>entry("trace");
+</span></span></code></pre><h2 id=sysinfo>🟦 Sysinfo<a aria-label="Anchor link for: sysinfo" class=zola-anchor href=#sysinfo style=visibility:hidden>#</a></h2><blockquote><p>In this assignment you will add a system call, <code>sysinfo</code>, that collects information about the running system. The system call takes one argument: a pointer to a <code>struct sysinfo</code> (see <code>kernel/sysinfo.h</code>). The kernel should fill out the fields of this struct: the <code>freemem</code> field should be set to the number of bytes of free memory, and the <code>nproc</code> field should be set to the number of processes whose <code>state</code> is not <code>UNUSED</code>. We provide a test program <code>sysinfotest</code>; you pass this assignment if it prints “sysinfotest: OK”.</blockquote><h3 id=fen-xi-1>分析<a aria-label="Anchor link for: fen-xi-1" class=zola-anchor href=#fen-xi-1 style=visibility:hidden>#</a></h3><p>简单来说，这个问题就是让我们在调用 <code>sysinfo</code> 时从 kernel mode 向 user mode 复制相关的系统信息：<code>freemem</code> 以及 <code>nproc</code><ul><li><p><code>sysinfo</code> 这个系统调用和前面的 <code>trace</code> 一样，先添加系统调用号、再往调用表中添加函数入口 balabala。函数体 <code>sys_sysinfo</code> 的位置我放到 <code>kernel/sys_file.c</code> 里面了，同时将 <code>getfreemem</code> 和 <code>getnproc</code> 这两个函数签名在这个文件用 <code>extern</code> 标识了一下。<code>sys_sysinfo</code> 的执行倒是简单，使用 <code>copyout</code> 将两个 <code>getxxx</code> 得到的值复制到用户空间即可</p> <pre class="language-c z-code" data-lang=c><code class=language-c data-lang=c><span class="z-source z-c">uint64
+<span class="z-meta z-function z-c"><span class="z-entity z-name z-function z-c">sys_sysinfo</span></span><span class="z-meta z-function z-parameters z-c"><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span></span></span><span class="z-meta z-function z-parameters z-c"><span class="z-meta z-group z-c"><span class="z-storage z-type z-c">void</span><span class="z-punctuation z-section z-group z-end z-c">)</span></span></span><span class="z-meta z-function z-c">
+</span><span class="z-meta z-function z-c"><span class="z-meta z-block z-c"><span class="z-punctuation z-section z-block z-begin z-c">{</span></span></span><span class="z-meta z-function z-c"><span class="z-meta z-block z-c">
+  uint64 pinfo<span class="z-punctuation z-terminator z-c">;</span>
+  <span class="z-meta z-function-call z-c"><span class="z-variable z-function z-c">argaddr</span><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span></span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c"><span class="z-constant z-numeric z-integer z-decimal z-c">0</span><span class="z-punctuation z-separator z-c">,</span> <span class="z-keyword z-operator z-c">&</span>pinfo</span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-end z-c">)</span></span></span><span class="z-punctuation z-terminator z-c">;</span>
+
+  <span class="z-storage z-type z-c">struct</span> sysinfo info<span class="z-punctuation z-terminator z-c">;</span>
+  info<span class="z-punctuation z-accessor z-c">.</span><span class="z-variable z-other z-member z-c">nproc</span> <span class="z-keyword z-operator z-assignment z-c">=</span> <span class="z-meta z-function-call z-c"><span class="z-variable z-function z-c">getnproc</span><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span></span></span><span class="z-meta z-function-call z-c"></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-end z-c">)</span></span></span><span class="z-punctuation z-terminator z-c">;</span>
+  info<span class="z-punctuation z-accessor z-c">.</span><span class="z-variable z-other z-member z-c">freemem</span> <span class="z-keyword z-operator z-assignment z-c">=</span> <span class="z-meta z-function-call z-c"><span class="z-variable z-function z-c">getfreemem</span><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span></span></span><span class="z-meta z-function-call z-c"></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-end z-c">)</span></span></span><span class="z-punctuation z-terminator z-c">;</span>
+
+  <span class="z-keyword z-control z-c">if</span> <span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span><span class="z-meta z-function-call z-c"><span class="z-variable z-function z-c">copyout</span><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span></span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c"><span class="z-meta z-function-call z-c"><span class="z-variable z-function z-c">myproc</span><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span></span></span><span class="z-meta z-function-call z-c"></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-end z-c">)</span></span></span><span class="z-punctuation z-accessor z-c">-></span>pagetable<span class="z-punctuation z-separator z-c">,</span> pinfo<span class="z-punctuation z-separator z-c">,</span> <span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span><span class="z-storage z-type z-c">char</span><span class="z-keyword z-operator z-c">*</span><span class="z-punctuation z-section z-group z-end z-c">)</span></span><span class="z-keyword z-operator z-c">&</span>info<span class="z-punctuation z-separator z-c">,</span> <span class="z-keyword z-operator z-word z-c">sizeof</span><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span></span><span class="z-meta z-group z-c">info</span><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-end z-c">)</span></span></span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-end z-c">)</span></span></span> <span class="z-keyword z-operator z-comparison z-c"><</span> <span class="z-constant z-numeric z-integer z-decimal z-c">0</span><span class="z-punctuation z-section z-group z-end z-c">)</span></span> <span class="z-meta z-block z-c"><span class="z-punctuation z-section z-block z-begin z-c">{</span>
+    <span class="z-keyword z-control z-flow z-return z-c">return</span> <span class="z-keyword z-operator z-arithmetic z-c">-</span><span class="z-constant z-numeric z-integer z-decimal z-c">1</span><span class="z-punctuation z-terminator z-c">;</span>
+  <span class="z-punctuation z-section z-block z-end z-c">}</span></span>
+
+  <span class="z-keyword z-control z-flow z-return z-c">return</span> <span class="z-constant z-numeric z-integer z-decimal z-c">0</span><span class="z-punctuation z-terminator z-c">;</span>
+</span></span><span class="z-meta z-function z-c"><span class="z-meta z-block z-c"><span class="z-punctuation z-section z-block z-end z-c">}</span></span></span>
+</span></code></pre><li><p><code>getfreemem</code> 添加到 <code>kernel/kalloc.c</code> 中。为了记录空闲空间，需要添加一个全局变量 <code>freemem</code> 记录当前的空闲空间大小。简单分析一遍相关代码，其实可以看到 <code>kernel/kalloc.c</code> 这个文件中，分配和释放空间的函数分别只有 <code>kalloc</code> 和 <code>kfree</code>，所以 <code>freemem</code> 这个变量只需要在这两个函数中进行修改</p> <blockquote><p>这里只有一个坑，<code>kalloc</code> 在判断有空闲空间后会 “fill with junk”，只有这个时候才能修改 <code>freemem</code> 的值 {: .prompt-warning}</blockquote><li><p><code>getnproc</code> 和 <code>getfreemem</code> 差不多，只需要在 <code>allocproc</code> 和 <code>freeproc</code> 时修改 <code>nproc</code> 的值即可</p></ul><h3 id=dai-ma-1>代码<a aria-label="Anchor link for: dai-ma-1" class=zola-anchor href=#dai-ma-1 style=visibility:hidden>#</a></h3><blockquote class="callout tip"><div class=icon><svg viewbox="0 0 24 24" height=20 width=20 xmlns=http://www.w3.org/2000/svg><path d="M9.97308 18H11V13H13V18H14.0269C14.1589 16.7984 14.7721 15.8065 15.7676 14.7226C15.8797 14.6006 16.5988 13.8564 16.6841 13.7501C17.5318 12.6931 18 11.385 18 10C18 6.68629 15.3137 4 12 4C8.68629 4 6 6.68629 6 10C6 11.3843 6.46774 12.6917 7.31462 13.7484C7.40004 13.855 8.12081 14.6012 8.23154 14.7218C9.22766 15.8064 9.84103 16.7984 9.97308 18ZM10 20V21H14V20H10ZM5.75395 14.9992C4.65645 13.6297 4 11.8915 4 10C4 5.58172 7.58172 2 12 2C16.4183 2 20 5.58172 20 10C20 11.8925 19.3428 13.6315 18.2443 15.0014C17.624 15.7748 16 17 16 18.5V21C16 22.1046 15.1046 23 14 23H10C8.89543 23 8 22.1046 8 21V18.5C8 17 6.37458 15.7736 5.75395 14.9992Z" fill=currentColor></path></svg></div><div class=content><p>才发现我把 4096 写死了 😂，这里建议用 <code>PGSIZE</code></div></blockquote><pre class="language-diff z-code" data-lang=diff><code class=language-diff data-lang=diff><span class="z-source z-diff">diff --git a/Makefile b/Makefile
+index 97e2954..eb6f06a 100644
+<span class="z-meta z-diff z-header z-from-file"><span class="z-meta z-header z-from-file z-diff"><span class="z-punctuation z-definition z-from-file z-diff">---</span> a/Makefile
+</span></span><span class="z-meta z-diff z-header z-to-file"><span class="z-meta z-header z-to-file z-diff"><span class="z-punctuation z-definition z-to-file z-diff">+++</span> b/Makefile
+</span></span><span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-184,6 +184,7</span> <span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-entity z-name z-section z-diff">UPROGS=\</span>
+</span></span>  $U/_rm\
+  $U/_sh\
+  $U/_stressfs\
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span> $U/_sysinfotest\
+</span>  $U/_trace\
+  $U/_usertests\
+  $U/_grind\
+diff --git a/answers-syscall.txt b/answers-syscall.txt
+new file mode 100644
+index 0000000..62a5ecc
+<span class="z-meta z-diff z-header z-from-file"><span class="z-meta z-header z-from-file z-diff"><span class="z-punctuation z-definition z-from-file z-diff">---</span> /dev/null
+</span></span><span class="z-meta z-diff z-header z-to-file"><span class="z-meta z-header z-to-file z-diff"><span class="z-punctuation z-definition z-to-file z-diff">+++</span> b/answers-syscall.txt
+</span></span><span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-0,0 +1</span> <span class="z-punctuation z-definition z-range z-diff">@@</span>
+</span></span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>There is nothing
+</span>\ No newline at end of file
+diff --git a/kernel/kalloc.c b/kernel/kalloc.c
+index 0699e7e..da31ea7 100644
+<span class="z-meta z-diff z-header z-from-file"><span class="z-meta z-header z-from-file z-diff"><span class="z-punctuation z-definition z-from-file z-diff">---</span> a/kernel/kalloc.c
+</span></span><span class="z-meta z-diff z-header z-to-file"><span class="z-meta z-header z-to-file z-diff"><span class="z-punctuation z-definition z-to-file z-diff">+++</span> b/kernel/kalloc.c
+</span></span><span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-23,6 +23,8</span> <span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-entity z-name z-section z-diff">struct {</span>
+</span></span>   struct run *freelist;
+ } kmem;
+ 
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>uint64 freemem = 0;
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>
+</span> void
+ kinit()
+ {
+<span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-59,6 +61,7</span> <span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-entity z-name z-section z-diff">kfree(void *pa)</span>
+</span></span>   acquire(&kmem.lock);
+   r->next = kmem.freelist;
+   kmem.freelist = r;
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  freemem += 4096;
+</span>   release(&kmem.lock);
+ }
+ 
+<span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-76,7 +79,15</span> <span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-entity z-name z-section z-diff">kalloc(void)</span>
+</span></span>     kmem.freelist = r->next;
+   release(&kmem.lock);
+ 
+<span class="z-markup z-deleted z-diff"><span class="z-punctuation z-definition z-deleted z-diff">-</span>  if(r)
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  if(r) {
+</span>     memset((char*)r, 5, PGSIZE); // fill with junk
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>    freemem -= 4096;
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  }
+</span>   return (void*)r;
+ }
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>uint64
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>getfreemem()
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>{
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  return freemem;
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>}
+</span>diff --git a/kernel/proc.c b/kernel/proc.c
+index d7cefdb..227ccce 100644
+<span class="z-meta z-diff z-header z-from-file"><span class="z-meta z-header z-from-file z-diff"><span class="z-punctuation z-definition z-from-file z-diff">---</span> a/kernel/proc.c
+</span></span><span class="z-meta z-diff z-header z-to-file"><span class="z-meta z-header z-to-file z-diff"><span class="z-punctuation z-definition z-to-file z-diff">+++</span> b/kernel/proc.c
+</span></span><span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-12,6 +12,8</span> <span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-entity z-name z-section z-diff">struct proc proc[NPROC];</span>
+</span></span> 
+ struct proc *initproc;
+ 
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>int nproc = 0;
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>
+</span> int nextpid = 1;
+ struct spinlock pid_lock;
+ 
+<span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-89,6 +91,12</span> <span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-entity z-name z-section z-diff">myproc(void)</span>
+</span></span>   return p;
+ }
+ 
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>int
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>getnproc(void)
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>{
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  return nproc;
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>}
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>
+</span> int
+ allocpid()
+ {
+<span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-147,6 +155,8</span> <span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-entity z-name z-section z-diff">found:</span>
+</span></span>   p->context.ra = (uint64)forkret;
+   p->context.sp = p->kstack + PGSIZE;
+ 
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  nproc++;
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>
+</span>   return p;
+ }
+ 
+<span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-170,6 +180,7</span> <span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-entity z-name z-section z-diff">freeproc(struct proc *p)</span>
+</span></span>   p->killed = 0;
+   p->xstate = 0;
+   p->state = UNUSED;
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  nproc--;
+</span> }
+ 
+ // Create a user page table for a given process, with no user memory,
+diff --git a/kernel/syscall.c b/kernel/syscall.c
+index 873793a..1ab2b3a 100644
+<span class="z-meta z-diff z-header z-from-file"><span class="z-meta z-header z-from-file z-diff"><span class="z-punctuation z-definition z-from-file z-diff">---</span> a/kernel/syscall.c
+</span></span><span class="z-meta z-diff z-header z-to-file"><span class="z-meta z-header z-to-file z-diff"><span class="z-punctuation z-definition z-to-file z-diff">+++</span> b/kernel/syscall.c
+</span></span><span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-102,6 +102,7</span> <span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-entity z-name z-section z-diff">extern uint64 sys_link(void);</span>
+</span></span> extern uint64 sys_mkdir(void);
+ extern uint64 sys_close(void);
+ extern uint64 sys_trace(void);
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>extern uint64 sys_sysinfo(void);
+</span> 
+ // An array mapping syscall numbers from syscall.h
+ // to the function that handles the system call.
+<span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-128,6 +129,7</span> <span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-entity z-name z-section z-diff">static uint64 (*syscalls[])(void) = {</span>
+</span></span> [SYS_mkdir]   sys_mkdir,
+ [SYS_close]   sys_close,
+ [SYS_trace]   sys_trace,
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>[SYS_sysinfo] sys_sysinfo,
+</span> };
+ 
+ static const char* sysnames[] = {
+<span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-153,6 +155,7</span> <span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-entity z-name z-section z-diff">static const char* sysnames[] = {</span>
+</span></span> [SYS_mkdir]   "mkdir",
+ [SYS_close]   "close",
+ [SYS_trace]   "trace",
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>[SYS_sysinfo] "sysinfo",
+</span> };
+ 
+ void
+diff --git a/kernel/syscall.h b/kernel/syscall.h
+index cc112b9..0dfedc7 100644
+<span class="z-meta z-diff z-header z-from-file"><span class="z-meta z-header z-from-file z-diff"><span class="z-punctuation z-definition z-from-file z-diff">---</span> a/kernel/syscall.h
+</span></span><span class="z-meta z-diff z-header z-to-file"><span class="z-meta z-header z-to-file z-diff"><span class="z-punctuation z-definition z-to-file z-diff">+++</span> b/kernel/syscall.h
+</span></span><span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-21,3 +21,4</span> <span class="z-punctuation z-definition z-range z-diff">@@</span>
+</span></span> #define SYS_mkdir  20
+ #define SYS_close  21
+ #define SYS_trace  22
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>#define SYS_sysinfo 23
+</span>diff --git a/kernel/sysfile.c b/kernel/sysfile.c
+index 16b668c..b675a82 100644
+<span class="z-meta z-diff z-header z-from-file"><span class="z-meta z-header z-from-file z-diff"><span class="z-punctuation z-definition z-from-file z-diff">---</span> a/kernel/sysfile.c
+</span></span><span class="z-meta z-diff z-header z-to-file"><span class="z-meta z-header z-to-file z-diff"><span class="z-punctuation z-definition z-to-file z-diff">+++</span> b/kernel/sysfile.c
+</span></span><span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-15,6 +15,10</span> <span class="z-punctuation z-definition z-range z-diff">@@</span>
+</span></span> #include "sleeplock.h"
+ #include "file.h"
+ #include "fcntl.h"
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>#include "sysinfo.h"
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>extern uint64 getnproc();
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>extern uint64 getfreemem();
+</span> 
+ // Fetch the nth word-sized system call argument as a file descriptor
+ // and return both the descriptor and the corresponding struct file.
+<span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-119,6 +123,23</span> <span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-entity z-name z-section z-diff">sys_fstat(void)</span>
+</span></span>   return filestat(f, st);
+ }
+ 
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>uint64
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>sys_sysinfo(void)
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>{
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  uint64 pinfo;
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  argaddr(0, &pinfo);
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  struct sysinfo info;
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  info.nproc = getnproc();
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  info.freemem = getfreemem();
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  if (copyout(myproc()->pagetable, pinfo, (char*)&info, sizeof(info)) < 0) {
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>    return -1;
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  }
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  return 0;
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>}
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>
+</span> // Create the path new as a link to the same inode as old.
+ uint64
+ sys_link(void)
+diff --git a/time.txt b/time.txt
+new file mode 100644
+index 0000000..e440e5c
+<span class="z-meta z-diff z-header z-from-file"><span class="z-meta z-header z-from-file z-diff"><span class="z-punctuation z-definition z-from-file z-diff">---</span> /dev/null
+</span></span><span class="z-meta z-diff z-header z-to-file"><span class="z-meta z-header z-to-file z-diff"><span class="z-punctuation z-definition z-to-file z-diff">+++</span> b/time.txt
+</span></span><span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-0,0 +1</span> <span class="z-punctuation z-definition z-range z-diff">@@</span>
+</span></span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>3
+</span>\ No newline at end of file
+diff --git a/user/user.h b/user/user.h
+index 0bf4333..14f69e5 100644
+<span class="z-meta z-diff z-header z-from-file"><span class="z-meta z-header z-from-file z-diff"><span class="z-punctuation z-definition z-from-file z-diff">---</span> a/user/user.h
+</span></span><span class="z-meta z-diff z-header z-to-file"><span class="z-meta z-header z-to-file z-diff"><span class="z-punctuation z-definition z-to-file z-diff">+++</span> b/user/user.h
+</span></span><span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-1,4 +1,5</span> <span class="z-punctuation z-definition z-range z-diff">@@</span>
+</span></span> struct stat;
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>struct sysinfo;
+</span> 
+ // system calls
+ int fork(void);
+<span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-23,6 +24,7</span> <span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-entity z-name z-section z-diff">char* sbrk(int);</span>
+</span></span> int sleep(int);
+ int uptime(void);
+ int trace(int);
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>int sysinfo(struct sysinfo*);
+</span> 
+ // ulib.c
+ int stat(const char*, struct stat*);
+diff --git a/user/usys.pl b/user/usys.pl
+index 9c97b05..bc109fd 100755
+<span class="z-meta z-diff z-header z-from-file"><span class="z-meta z-header z-from-file z-diff"><span class="z-punctuation z-definition z-from-file z-diff">---</span> a/user/usys.pl
+</span></span><span class="z-meta z-diff z-header z-to-file"><span class="z-meta z-header z-to-file z-diff"><span class="z-punctuation z-definition z-to-file z-diff">+++</span> b/user/usys.pl
+</span></span><span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-37,3 +37,4</span> <span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-entity z-name z-section z-diff">entry("sbrk");</span>
+</span></span> entry("sleep");
+ entry("uptime");
+ entry("trace");
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>entry("sysinfo");
+</span></span></code></pre></article><div class=giscus></div><script async crossorigin data-category=Announcements data-category-id=DIC_kwDOLNtmis4Cc7ki data-emit-metadata=0 data-input-position=bottom data-lang=en data-loading=lazy data-mapping=pathname data-reactions-enabled=1 data-repo=MiaoHN/MiaoHN.github.io data-repo-id=R_kgDOLNtmig data-strict=0 data-theme=https://miaohn.github.io/giscus_light.css src=https://giscus.app/client.js></script></div><footer><div class=copyright><p>© 2023 MiaoHN</div><div class=credits>powered by <a rel="noreferrer noopener" href=https://www.getzola.org target=_blank>zola</a> and <a rel="noreferrer noopener" href=https://github.com/isunjn/serene target=_blank>serene</a></div></footer></main></div><script src=/js/lightense.min.js></script><script type=module>
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true });
+</script><script src=/js/main.js></script>

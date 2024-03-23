@@ -1,0 +1,403 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta content="width=device-width,initial-scale=1.0" name=viewport><meta content="light dark" name=color-scheme><title>MIT 6.S081 | 0x05 Copy on-write</title><link href=/img/favicon-32x32.png rel=icon sizes=32x32 type=image/png><link href=/img/favicon-16x16.png rel=icon sizes=16x16 type=image/png><link href=/img/apple-touch-icon.png rel=apple-touch-icon sizes=180x180><link href=https://fonts.googleapis.com rel=preconnect><link crossorigin href=https://fonts.gstatic.com rel=preconnect><link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&display=swap" rel=stylesheet><style>body{--primary-color:#5871a2;--primary-pale-color:#5871a210;--text-color:#3c4043;--text-pale-color:#94969f;--bg-color:#fff;--highlight-mark-color:#5f75b045;--callout-note-color:#5871a2;--callout-important-color:#8062b0;--callout-warning-color:#936e51;--callout-alert-color:#bc5252;--callout-question-color:#477389;--callout-tip-color:#3c8460;--main-font:"Lora",ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";--code-font:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;--homepage-max-width:768px;--main-max-width:768px;--avatar-size:60px;--icon-size:20px;--homepage-font-size:16px;--homepage-line-height:1.75;--paragraph-font-size:16px;--paragraph-line-height:1.75;--aside-font-size:15px;--img-border-radius:0;--callout-border-radius:0;--detail-border-radius:0;--dark-mode-img-brightness:.60;--dark-mode-chart-brightness:.75;--inline-code-border-radius:2px;--inline-code-bg-color:var(--primary-pale-color);--block-code-border-radius:5px;--block-code-border-color:var(--primary-color);--detail-border-color:var(--primary-color)}body.dark{--primary-color:#5d77ac;--primary-pale-color:#5d77ac20;--text-color:#9197a5;--text-pale-color:#747983;--bg-color:#202124;--highlight-mark-color:#5f75b045;--callout-note-color:#5d77ac;--callout-important-color:#8062b0;--callout-warning-color:#936e51;--callout-alert-color:#bc5252;--callout-question-color:#477389;--callout-tip-color:#3c8460}</style><link href=/main.css rel=stylesheet><link href=/hl-light.css id=hl rel=stylesheet><script>var host=window.location.host;if(host!="localhost"){var script=document.createElement('script');script.src="https://us.umami.is/script.js";script.async=true;script.dataset.websiteId="eac6652d-5acf-4760-90e8-a8ddb10e4b8d"}</script><script src=https://esm.sh/@stefanjudis/sparkly-text type=module></script><body class=post><script>const theme=sessionStorage.getItem('theme');const match=window.matchMedia("(prefers-color-scheme: dark)").matches;if(theme&&theme=='dark'||!theme&&match){document.body.classList.add('dark');const a=document.querySelector('link#hl');if(a)a.href='/hl-dark.css'}</script><header class=blur><div id=header-wrapper><nav><a class=instant href=/>matt</a><span class=separator>::</span><a class=instant href=/posts>posts</a></nav><div id=btns><a aria-label="rss feed" href=/posts/feed.xml id=rss-btn><svg viewbox="0 0 24 24" height=20 width=20 xmlns=http://www.w3.org/2000/svg><path d="M3 17C5.20914 17 7 18.7909 7 21H3V17ZM3 10C9.07513 10 14 14.9249 14 21H12C12 16.0294 7.97056 12 3 12V10ZM3 3C12.9411 3 21 11.0589 21 21H19C19 12.1634 11.8366 5 3 5V3Z" fill=currentColor></path></svg></a><button aria-label="theme switch" data-moon-icon='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20"><path d="M10 7C10 10.866 13.134 14 17 14C18.9584 14 20.729 13.1957 21.9995 11.8995C22 11.933 22 11.9665 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C12.0335 2 12.067 2 12.1005 2.00049C10.8043 3.27098 10 5.04157 10 7ZM4 12C4 16.4183 7.58172 20 12 20C15.0583 20 17.7158 18.2839 19.062 15.7621C18.3945 15.9187 17.7035 16 17 16C12.0294 16 8 11.9706 8 7C8 6.29648 8.08133 5.60547 8.2379 4.938C5.71611 6.28423 4 8.9417 4 12Z" fill="currentColor"></path></svg>' data-sun-icon='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20"><path d="M12 18C8.68629 18 6 15.3137 6 12C6 8.68629 8.68629 6 12 6C15.3137 6 18 8.68629 18 12C18 15.3137 15.3137 18 12 18ZM12 16C14.2091 16 16 14.2091 16 12C16 9.79086 14.2091 8 12 8C9.79086 8 8 9.79086 8 12C8 14.2091 9.79086 16 12 16ZM11 1H13V4H11V1ZM11 20H13V23H11V20ZM3.51472 4.92893L4.92893 3.51472L7.05025 5.63604L5.63604 7.05025L3.51472 4.92893ZM16.9497 18.364L18.364 16.9497L20.4853 19.0711L19.0711 20.4853L16.9497 18.364ZM19.0711 3.51472L20.4853 4.92893L18.364 7.05025L16.9497 5.63604L19.0711 3.51472ZM5.63604 16.9497L7.05025 18.364L4.92893 20.4853L3.51472 19.0711L5.63604 16.9497ZM23 11V13H20V11H23ZM4 11V13H1V11H4Z" fill="currentColor"></path></svg>' id=theme-toggle><svg viewbox="0 0 24 24" height=20 width=20 xmlns=http://www.w3.org/2000/svg><path d="M10 7C10 10.866 13.134 14 17 14C18.9584 14 20.729 13.1957 21.9995 11.8995C22 11.933 22 11.9665 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C12.0335 2 12.067 2 12.1005 2.00049C10.8043 3.27098 10 5.04157 10 7ZM4 12C4 16.4183 7.58172 20 12 20C15.0583 20 17.7158 18.2839 19.062 15.7621C18.3945 15.9187 17.7035 16 17 16C12.0294 16 8 11.9706 8 7C8 6.29648 8.08133 5.60547 8.2379 4.938C5.71611 6.28423 4 8.9417 4 12Z" fill=currentColor></path></svg></button><button aria-label="table of content" id=toc-toggle><svg viewbox="0 0 24 24" height=20 width=20 xmlns=http://www.w3.org/2000/svg><path d="M3 4H21V6H3V4ZM3 11H15V13H3V11ZM3 18H21V20H3V18Z" fill=currentColor></path></svg></button></div></div></header><dialog id=rss-mask><div><a href=https://miaohn.github.io/posts/feed.xml>https://miaohn.github.io/posts/feed.xml</a><button data-check-icon='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20"><path d="M10.0007 15.1709L19.1931 5.97852L20.6073 7.39273L10.0007 17.9993L3.63672 11.6354L5.05093 10.2212L10.0007 15.1709Z" fill="currentColor"></path></svg>' data-copy-icon='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20"><path d="M6.9998 6V3C6.9998 2.44772 7.44752 2 7.9998 2H19.9998C20.5521 2 20.9998 2.44772 20.9998 3V17C20.9998 17.5523 20.5521 18 19.9998 18H16.9998V20.9991C16.9998 21.5519 16.5499 22 15.993 22H4.00666C3.45059 22 3 21.5554 3 20.9991L3.0026 7.00087C3.0027 6.44811 3.45264 6 4.00942 6H6.9998ZM5.00242 8L5.00019 20H14.9998V8H5.00242ZM8.9998 6H16.9998V16H18.9998V4H8.9998V6Z" fill="currentColor"></path></svg>' aria-label=copy autofocus data-link=https://miaohn.github.io/posts/feed.xml><svg viewbox="0 0 24 24" height=20 width=20 xmlns=http://www.w3.org/2000/svg><path d="M6.9998 6V3C6.9998 2.44772 7.44752 2 7.9998 2H19.9998C20.5521 2 20.9998 2.44772 20.9998 3V17C20.9998 17.5523 20.5521 18 19.9998 18H16.9998V20.9991C16.9998 21.5519 16.5499 22 15.993 22H4.00666C3.45059 22 3 21.5554 3 20.9991L3.0026 7.00087C3.0027 6.44811 3.45264 6 4.00942 6H6.9998ZM5.00242 8L5.00019 20H14.9998V8H5.00242ZM8.9998 6H16.9998V16H18.9998V4H8.9998V6Z" fill=currentColor></path></svg></button></div></dialog><div id=wrapper><div id=blank></div><aside><nav><ul><li><a class=h2 href=#implement-copy-on-write>🟥 Implement copy-on write</a> <ul><li><a class=h3 href=#xiu-gai-uvmcopy>修改 uvmcopy()</a><li><a class=h3 href=#xiu-gai-usertrap>修改 usertrap()</a><li><a class=h3 href=#xiu-gai-copyout>修改 copyout()</a><li><a class=h3 href=#tian-jia-yin-yong-ji-shu>添加引用计数</a><li><a class=h3 href=#quan-bu-dai-ma>全部代码</a></ul></ul></nav><button aria-label="back to top" id=back-to-top><svg viewbox="0 0 24 24" height=24 width=24 xmlns=http://www.w3.org/2000/svg><path d="M11.9997 10.8284L7.04996 15.7782L5.63574 14.364L11.9997 8L18.3637 14.364L16.9495 15.7782L11.9997 10.8284Z" fill=currentColor></path></svg></button></aside><main><div><div data-check-icon='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20"><path d="M10.0007 15.1709L19.1931 5.97852L20.6073 7.39273L10.0007 17.9993L3.63672 11.6354L5.05093 10.2212L10.0007 15.1709Z" fill="currentColor"></path></svg>' data-copy-icon='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20"><path d="M6.9998 6V3C6.9998 2.44772 7.44752 2 7.9998 2H19.9998C20.5521 2 20.9998 2.44772 20.9998 3V17C20.9998 17.5523 20.5521 18 19.9998 18H16.9998V20.9991C16.9998 21.5519 16.5499 22 15.993 22H4.00666C3.45059 22 3 21.5554 3 20.9991L3.0026 7.00087C3.0027 6.44811 3.45264 6 4.00942 6H6.9998ZM5.00242 8L5.00019 20H14.9998V8H5.00242ZM8.9998 6H16.9998V16H18.9998V4H8.9998V6Z" fill="currentColor"></path></svg>' id=copy-cfg style=display:none></div><article data-backlink-icon='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20"><path d="M9.41421 8L18.0208 16.6066L16.6066 18.0208L8 9.41421V17H6V6H17V8H9.41421Z" fill="currentColor"></path></svg>' class=prose><h1>MIT 6.S081 | 0x05 Copy on-write</h1><div id=post-info><div id=date><span id=publish>2024-03-05</span></div><div id=tags><a class=instant href=https://miaohn.github.io/tags/labs><span>#</span>labs</a></div></div><blockquote class="callout alert hidden" data-alert-text-after=" days ago and may be out of date." data-alert-text-before="This article was last updated " data-days=120 id=outdate_alert><div class=icon><svg viewbox="0 0 24 24" height=20 width=20 xmlns=http://www.w3.org/2000/svg><path d="M4.00098 20V14C4.00098 9.58172 7.5827 6 12.001 6C16.4193 6 20.001 9.58172 20.001 14V20H21.001V22H3.00098V20H4.00098ZM6.00098 20H18.001V14C18.001 10.6863 15.3147 8 12.001 8C8.68727 8 6.00098 10.6863 6.00098 14V20ZM11.001 2H13.001V5H11.001V2ZM19.7792 4.80761L21.1934 6.22183L19.0721 8.34315L17.6578 6.92893L19.7792 4.80761ZM2.80859 6.22183L4.22281 4.80761L6.34413 6.92893L4.92991 8.34315L2.80859 6.22183ZM7.00098 14C7.00098 11.2386 9.23956 9 12.001 9V11C10.3441 11 9.00098 12.3431 9.00098 14H7.00098Z" fill=currentColor></path></svg></div><div class=content></div></blockquote><ul><li>链接：<a rel="noopener nofollow noreferrer" href=https://pdos.csail.mit.edu/6.S081/2021/labs/cow.html target=_blank>https://pdos.csail.mit.edu/6.S081/2021/labs/cow.html</a><li>难度：🟥</ul><p>嘿嘿。。嘿。<a href=/posts/mit-6-s081-0x04>上个实验</a>还是在去年做的 😋。非常抱歉我拖了这么久，<del>拖延症晚期了</del>。不过既然都开了这个系列，那还是更新吧。<blockquote class="callout note"><div class=icon><svg viewbox="0 0 24 24" height=20 width=20 xmlns=http://www.w3.org/2000/svg><path d="M12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22ZM12 20C16.4183 20 20 16.4183 20 12C20 7.58172 16.4183 4 12 4C7.58172 4 4 7.58172 4 12C4 16.4183 7.58172 20 12 20ZM11 7H13V9H11V7ZM11 11H13V17H11V11Z" fill=currentColor></path></svg></div><div class=content><p>COW 这节 lab 我顶多花了 15 个小时就做差不多了，但是有一个小 bug 迟迟没有发现，导致我一直没有任何进展。最后受不了在网上找代码对比，才发现我把 <code>uvmunmap</code> 函数最后一个参数写错了，其它地方都是对的，就很难受。<p>参考了<a rel="noopener nofollow noreferrer" href=https://ttzytt.com/2022/07/xv6_lab6_record/index.html target=_blank>别人写的代码</a>，函数封装的很舒服，于是我也就按相似的方式把一些代码简单做了一下封装。<p>然后就是 <code>usertests</code> 有一个 case <code>textwrite</code> 一直没通过，我把那行注释掉就全过了，这算一个小遗憾，后期如果能通过我就更新一下这篇文章。</div></blockquote><h2 id=implement-copy-on-write>🟥 Implement copy-on write<a aria-label="Anchor link for: implement-copy-on-write" class=zola-anchor href=#implement-copy-on-write style=visibility:hidden>#</a></h2><p>copy-on write，COW，又称写时复制，这个实验算 6.S081 里比较出名的实验了吧。在使用 <code>fork()</code> 时为了减少开销，会让父子进程的页表指向同一个物理地址，节省了分配空间所占的时间。将对应的页改为不可写，直到出现 page fault 时才复制对应的页。<p>所以整个实验主要分为两个部分：<ol><li>调用 <code>fork()</code> 后仅修改页表，并将权限设为不可写<li>page fault 时为 COW 的页分配空间</ol><h3 id=xiu-gai-uvmcopy>修改 <code>uvmcopy()</code><a aria-label="Anchor link for: xiu-gai-uvmcopy" class=zola-anchor href=#xiu-gai-uvmcopy style=visibility:hidden>#</a></h3><p>在使用 <code>fork()</code> 创建子进程时，会使用 <code>uvmcopy()</code> 将父进程页表的空间复制到子进程的页表中。这部分原本的做法是既复制页表页复制对应的空间。而我们要将其修改为仅复制页表并将两个页表的权限设为不可写。<blockquote class="callout tip"><div class=icon><svg viewbox="0 0 24 24" height=20 width=20 xmlns=http://www.w3.org/2000/svg><path d="M9.97308 18H11V13H13V18H14.0269C14.1589 16.7984 14.7721 15.8065 15.7676 14.7226C15.8797 14.6006 16.5988 13.8564 16.6841 13.7501C17.5318 12.6931 18 11.385 18 10C18 6.68629 15.3137 4 12 4C8.68629 4 6 6.68629 6 10C6 11.3843 6.46774 12.6917 7.31462 13.7484C7.40004 13.855 8.12081 14.6012 8.23154 14.7218C9.22766 15.8064 9.84103 16.7984 9.97308 18ZM10 20V21H14V20H10ZM5.75395 14.9992C4.65645 13.6297 4 11.8915 4 10C4 5.58172 7.58172 2 12 2C16.4183 2 20 5.58172 20 10C20 11.8925 19.3428 13.6315 18.2443 15.0014C17.624 15.7748 16 17 16 18.5V21C16 22.1046 15.1046 23 14 23H10C8.89543 23 8 22.1046 8 21V18.5C8 17 6.37458 15.7736 5.75395 14.9992Z" fill=currentColor></path></svg></div><div class=content><p>在 <code>uvmcopy()</code> 通过复制页表使父子进程指向同一个物理空间，读的时候没有问题，当需要进行写入操作时，由于权限为不可写，所以会报 page fault，所以在 <code>usertrap()</code> 中遇到 page fault 时才会真正进行物理空间的复制。</div></blockquote><pre class="language-c z-code" data-lang=c><code class=language-c data-lang=c><span class="z-source z-c"><span class="z-storage z-type z-c">int</span>
+<span class="z-meta z-function z-c"><span class="z-entity z-name z-function z-c">uvmcopy</span></span><span class="z-meta z-function z-parameters z-c"><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span></span></span><span class="z-meta z-function z-parameters z-c"><span class="z-meta z-group z-c">pagetable_t <span class="z-variable z-parameter z-c">old</span><span class="z-punctuation z-separator z-c">,</span> pagetable_t <span class="z-variable z-parameter z-c">new</span><span class="z-punctuation z-separator z-c">,</span> uint64 <span class="z-variable z-parameter z-c">sz</span><span class="z-punctuation z-section z-group z-end z-c">)</span></span></span><span class="z-meta z-function z-c">
+</span><span class="z-meta z-function z-c"><span class="z-meta z-block z-c"><span class="z-punctuation z-section z-block z-begin z-c">{</span></span></span><span class="z-meta z-function z-c"><span class="z-meta z-block z-c">
+  pte_t <span class="z-keyword z-operator z-c">*</span>pte<span class="z-punctuation z-terminator z-c">;</span>
+  uint64 pa<span class="z-punctuation z-separator z-c">,</span> i<span class="z-punctuation z-terminator z-c">;</span>
+  <span class="z-support z-type z-sys-types z-c">uint</span> flags<span class="z-punctuation z-terminator z-c">;</span>
+
+  <span class="z-keyword z-control z-c">for</span><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span>i <span class="z-keyword z-operator z-assignment z-c">=</span> <span class="z-constant z-numeric z-integer z-decimal z-c">0</span><span class="z-punctuation z-terminator z-c">;</span> i <span class="z-keyword z-operator z-comparison z-c"><</span> sz<span class="z-punctuation z-terminator z-c">;</span> i <span class="z-keyword z-operator z-assignment z-augmented z-c">+=</span> PGSIZE<span class="z-punctuation z-section z-group z-end z-c">)</span></span><span class="z-meta z-block z-c"><span class="z-punctuation z-section z-block z-begin z-c">{</span>
+    <span class="z-keyword z-control z-c">if</span><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span>pte <span class="z-keyword z-operator z-assignment z-c">=</span> <span class="z-meta z-function-call z-c"><span class="z-variable z-function z-c">walk</span><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span></span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c">old<span class="z-punctuation z-separator z-c">,</span> i<span class="z-punctuation z-separator z-c">,</span> <span class="z-constant z-numeric z-integer z-decimal z-c">0</span></span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-end z-c">)</span></span></span><span class="z-punctuation z-section z-group z-end z-c">)</span></span> <span class="z-keyword z-operator z-comparison z-c">==</span> <span class="z-constant z-numeric z-integer z-decimal z-c">0</span><span class="z-punctuation z-section z-group z-end z-c">)</span></span>
+      <span class="z-meta z-function-call z-c"><span class="z-variable z-function z-c">panic</span><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span></span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c"><span class="z-string z-quoted z-double z-c"><span class="z-punctuation z-definition z-string z-begin z-c">"</span>uvmcopy: pte should exist<span class="z-punctuation z-definition z-string z-end z-c">"</span></span></span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-end z-c">)</span></span></span><span class="z-punctuation z-terminator z-c">;</span>
+    <span class="z-keyword z-control z-c">if</span><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span><span class="z-keyword z-operator z-c">*</span>pte <span class="z-keyword z-operator z-c">&</span> PTE_V<span class="z-punctuation z-section z-group z-end z-c">)</span></span> <span class="z-keyword z-operator z-comparison z-c">==</span> <span class="z-constant z-numeric z-integer z-decimal z-c">0</span><span class="z-punctuation z-section z-group z-end z-c">)</span></span>
+      <span class="z-meta z-function-call z-c"><span class="z-variable z-function z-c">panic</span><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span></span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c"><span class="z-string z-quoted z-double z-c"><span class="z-punctuation z-definition z-string z-begin z-c">"</span>uvmcopy: page not present<span class="z-punctuation z-definition z-string z-end z-c">"</span></span></span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-end z-c">)</span></span></span><span class="z-punctuation z-terminator z-c">;</span>
+    pa <span class="z-keyword z-operator z-assignment z-c">=</span> <span class="z-meta z-function-call z-c"><span class="z-variable z-function z-c">PTE2PA</span><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span></span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c"><span class="z-keyword z-operator z-c">*</span>pte</span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-end z-c">)</span></span></span><span class="z-punctuation z-terminator z-c">;</span>
+
+<mark>    <span class="z-keyword z-operator z-c">*</span>pte <span class="z-keyword z-operator z-assignment z-augmented z-c">&=</span> <span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span><span class="z-keyword z-operator z-arithmetic z-c">~</span>PTE_W<span class="z-punctuation z-section z-group z-end z-c">)</span></span><span class="z-punctuation z-terminator z-c">;</span>
+</mark><mark>    <span class="z-keyword z-operator z-c">*</span>pte <span class="z-keyword z-operator z-assignment z-augmented z-c">|=</span> PTE_C<span class="z-punctuation z-terminator z-c">;</span>   <span class="z-comment z-line z-double-slash z-c"><span class="z-punctuation z-definition z-comment z-c">//</span> cow flag
+</span></mark><mark>    flags <span class="z-keyword z-operator z-assignment z-c">=</span> <span class="z-meta z-function-call z-c"><span class="z-variable z-function z-c">PTE_FLAGS</span><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span></span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c"><span class="z-keyword z-operator z-c">*</span>pte</span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-end z-c">)</span></span></span><span class="z-punctuation z-terminator z-c">;</span>
+</mark><mark>    <span class="z-keyword z-control z-c">if</span> <span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span><span class="z-meta z-function-call z-c"><span class="z-variable z-function z-c">mappages</span><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span></span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c">new<span class="z-punctuation z-separator z-c">,</span> i<span class="z-punctuation z-separator z-c">,</span> PGSIZE<span class="z-punctuation z-separator z-c">,</span> <span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span>uint64<span class="z-punctuation z-section z-group z-end z-c">)</span></span>pa<span class="z-punctuation z-separator z-c">,</span> flags</span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-end z-c">)</span></span></span> <span class="z-keyword z-operator z-comparison z-c">!=</span> <span class="z-constant z-numeric z-integer z-decimal z-c">0</span><span class="z-punctuation z-section z-group z-end z-c">)</span></span> <span class="z-meta z-block z-c"><span class="z-punctuation z-section z-block z-begin z-c">{</span>
+      <span class="z-meta z-function-call z-c"><span class="z-support z-function z-C99 z-c">printf</span><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span></span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c"><span class="z-string z-quoted z-double z-c"><span class="z-punctuation z-definition z-string z-begin z-c">"</span>uvmcopy: failed<span class="z-constant z-character z-escape z-c">\n</span><span class="z-punctuation z-definition z-string z-end z-c">"</span></span></span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-end z-c">)</span></span></span><span class="z-punctuation z-terminator z-c">;</span>
+      <span class="z-meta z-function-call z-c"><span class="z-variable z-function z-c">uvmunmap</span><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span></span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c">new<span class="z-punctuation z-separator z-c">,</span> <span class="z-constant z-numeric z-integer z-decimal z-c">0</span><span class="z-punctuation z-separator z-c">,</span> i <span class="z-keyword z-operator z-arithmetic z-c">/</span> PGSIZE<span class="z-punctuation z-separator z-c">,</span> <span class="z-constant z-numeric z-integer z-decimal z-c">1</span></span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-end z-c">)</span></span></span><span class="z-punctuation z-terminator z-c">;</span>
+      <span class="z-keyword z-control z-flow z-return z-c">return</span> <span class="z-keyword z-operator z-arithmetic z-c">-</span><span class="z-constant z-numeric z-integer z-decimal z-c">1</span><span class="z-punctuation z-terminator z-c">;</span>
+    <span class="z-punctuation z-section z-block z-end z-c">}</span></span>
+<mark>    <span class="z-meta z-function-call z-c"><span class="z-variable z-function z-c">ref_cnt_inc</span><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span></span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c">pa</span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-end z-c">)</span></span></span><span class="z-punctuation z-terminator z-c">;</span>  <span class="z-comment z-line z-double-slash z-c"><span class="z-punctuation z-definition z-comment z-c">//</span> increase page ref count
+</span></mark>  <span class="z-punctuation z-section z-block z-end z-c">}</span>
+  <span class="z-keyword z-control z-flow z-return z-c">return</span> <span class="z-constant z-numeric z-integer z-decimal z-c">0</span><span class="z-punctuation z-terminator z-c">;</span>
+<span class="z-meta z-function z-c"><span class="z-meta z-block z-c"><span class="z-punctuation z-section z-block z-end z-c">}</span></span></span>
+
+<p>这一步很简单，删掉原先的 <code>kalloc()</code>，只操作页表就可以了。</p>
+<h3 id=xiu-gai-usertrap>修改 <code>usertrap()</code><a aria-label="Anchor link for: xiu-gai-usertrap" class=zola-anchor href=#xiu-gai-usertrap style=visibility:hidden>#</a></h3>
+<p>前面已经指出，在 <code>fork()</code> 时仅修改了页表，如果尝试写操作时会报 page fault，而这个中断在 <code>usertrap()</code> 中的中断号（<code>r_scause()</code>）是 15。所以在发生 15 号中断时我们需要做两件事：</p>
+<ol>
+<li>判断是否是由于 COW 导致的 page fault</li>
+<li>为 cow page fault 复制对应的物理空间</li>
+</ol>
+<blockquote class="callout tip">
+    
+    <div class=icon>
+        <svg viewbox="0 0 24 24" height=20 width=20 xmlns=http://www.w3.org/2000/svg><path d="M9.97308 18H11V13H13V18H14.0269C14.1589 16.7984 14.7721 15.8065 15.7676 14.7226C15.8797 14.6006 16.5988 13.8564 16.6841 13.7501C17.5318 12.6931 18 11.385 18 10C18 6.68629 15.3137 4 12 4C8.68629 4 6 6.68629 6 10C6 11.3843 6.46774 12.6917 7.31462 13.7484C7.40004 13.855 8.12081 14.6012 8.23154 14.7218C9.22766 15.8064 9.84103 16.7984 9.97308 18ZM10 20V21H14V20H10ZM5.75395 14.9992C4.65645 13.6297 4 11.8915 4 10C4 5.58172 7.58172 2 12 2C16.4183 2 20 5.58172 20 10C20 11.8925 19.3428 13.6315 18.2443 15.0014C17.624 15.7748 16 17 16 18.5V21C16 22.1046 15.1046 23 14 23H10C8.89543 23 8 22.1046 8 21V18.5C8 17 6.37458 15.7736 5.75395 14.9992Z" fill=currentColor></path></svg>
+    </div>
+    <div class=content>
+        
+        <p>这里分了两步，感觉重复调用了两回 <code>walk()</code>。实际上可以解耦操作，第一步判断是否是 COW 页的函数会在 <code>copyout()</code> 中遇到。</p>
+
+    </div>
+</blockquote>
+<p>首先判断所在的页是否是 COW 页，我们将页表对应的 flag 取到进行判断即可，这个命名也可取为 <code>is_cow_page()</code></p>
+<pre class="language-c z-code" data-lang=c><code class=language-c data-lang=c><span class="z-source z-c"><span class="z-storage z-type z-c">int</span> <span class="z-meta z-function z-c"><span class="z-entity z-name z-function z-c">cow_uncopied</span></span><span class="z-meta z-function z-parameters z-c"><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span></span></span><span class="z-meta z-function z-parameters z-c"><span class="z-meta z-group z-c">pagetable_t <span class="z-variable z-parameter z-c">pgtbl</span><span class="z-punctuation z-separator z-c">,</span> uint64 <span class="z-variable z-parameter z-c">va</span><span class="z-punctuation z-section z-group z-end z-c">)</span></span></span><span class="z-meta z-function z-c"> </span><span class="z-meta z-function z-c"><span class="z-meta z-block z-c"><span class="z-punctuation z-section z-block z-begin z-c">{</span></span></span><span class="z-meta z-function z-c"><span class="z-meta z-block z-c">
+  <span class="z-keyword z-control z-c">if</span> <span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span>va <span class="z-keyword z-operator z-comparison z-c">>=</span> MAXVA<span class="z-punctuation z-section z-group z-end z-c">)</span></span> <span class="z-keyword z-control z-flow z-return z-c">return</span> <span class="z-constant z-numeric z-integer z-decimal z-c">0</span><span class="z-punctuation z-terminator z-c">;</span>
+  pte_t <span class="z-keyword z-operator z-c">*</span> pte <span class="z-keyword z-operator z-assignment z-c">=</span> <span class="z-meta z-function-call z-c"><span class="z-variable z-function z-c">walk</span><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span></span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c">pgtbl<span class="z-punctuation z-separator z-c">,</span> va<span class="z-punctuation z-separator z-c">,</span> <span class="z-constant z-numeric z-integer z-decimal z-c">0</span></span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-end z-c">)</span></span></span><span class="z-punctuation z-terminator z-c">;</span>
+  <span class="z-keyword z-control z-c">if</span> <span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span>pte <span class="z-keyword z-operator z-comparison z-c">==</span> <span class="z-constant z-numeric z-integer z-decimal z-c">0</span><span class="z-punctuation z-section z-group z-end z-c">)</span></span> <span class="z-keyword z-control z-flow z-return z-c">return</span> <span class="z-constant z-numeric z-integer z-decimal z-c">0</span><span class="z-punctuation z-terminator z-c">;</span>
+  <span class="z-keyword z-control z-c">if</span> <span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span><span class="z-keyword z-operator z-c">*</span>pte <span class="z-keyword z-operator z-c">&</span> PTE_V<span class="z-punctuation z-section z-group z-end z-c">)</span></span> <span class="z-keyword z-operator z-comparison z-c">==</span> <span class="z-constant z-numeric z-integer z-decimal z-c">0</span><span class="z-punctuation z-section z-group z-end z-c">)</span></span> <span class="z-keyword z-control z-flow z-return z-c">return</span> <span class="z-constant z-numeric z-integer z-decimal z-c">0</span><span class="z-punctuation z-terminator z-c">;</span>
+  <span class="z-keyword z-control z-c">if</span> <span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span><span class="z-keyword z-operator z-c">*</span>pte <span class="z-keyword z-operator z-c">&</span> PTE_U<span class="z-punctuation z-section z-group z-end z-c">)</span></span> <span class="z-keyword z-operator z-comparison z-c">==</span> <span class="z-constant z-numeric z-integer z-decimal z-c">0</span><span class="z-punctuation z-section z-group z-end z-c">)</span></span> <span class="z-keyword z-control z-flow z-return z-c">return</span> <span class="z-constant z-numeric z-integer z-decimal z-c">0</span><span class="z-punctuation z-terminator z-c">;</span>
+  <span class="z-keyword z-control z-flow z-return z-c">return</span> <span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span><span class="z-keyword z-operator z-c">*</span>pte<span class="z-punctuation z-section z-group z-end z-c">)</span></span> <span class="z-keyword z-operator z-c">&</span> PTE_C<span class="z-punctuation z-section z-group z-end z-c">)</span></span><span class="z-punctuation z-terminator z-c">;</span>
+</span></span><span class="z-meta z-function z-c"><span class="z-meta z-block z-c"><span class="z-punctuation z-section z-block z-end z-c">}</span></span></span>
+</span></code></pre>
+<p>接下来就是为 COW 页分配空间的操作，这段代码实际上在之前的 <code>uvmcopy()</code> 里已经有一部分了，参考着写就 ok。</p>
+<pre class="language-c z-code" data-lang=c><code class=language-c data-lang=c><span class="z-source z-c"><span class="z-storage z-type z-c">int</span> <span class="z-meta z-function z-c"><span class="z-entity z-name z-function z-c">cow_alloc</span></span><span class="z-meta z-function z-parameters z-c"><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span></span></span><span class="z-meta z-function z-parameters z-c"><span class="z-meta z-group z-c">pagetable_t <span class="z-variable z-parameter z-c">pgtbl</span><span class="z-punctuation z-separator z-c">,</span> uint64 <span class="z-variable z-parameter z-c">va</span><span class="z-punctuation z-section z-group z-end z-c">)</span></span></span><span class="z-meta z-function z-c"> </span><span class="z-meta z-function z-c"><span class="z-meta z-block z-c"><span class="z-punctuation z-section z-block z-begin z-c">{</span></span></span><span class="z-meta z-function z-c"><span class="z-meta z-block z-c">
+  pte_t <span class="z-keyword z-operator z-c">*</span>pte <span class="z-keyword z-operator z-assignment z-c">=</span> <span class="z-meta z-function-call z-c"><span class="z-variable z-function z-c">walk</span><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span></span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c">pgtbl<span class="z-punctuation z-separator z-c">,</span> va<span class="z-punctuation z-separator z-c">,</span> <span class="z-constant z-numeric z-integer z-decimal z-c">0</span></span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-end z-c">)</span></span></span><span class="z-punctuation z-terminator z-c">;</span>
+  <span class="z-keyword z-control z-c">if</span> <span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span>pte <span class="z-keyword z-operator z-comparison z-c">==</span> <span class="z-constant z-numeric z-integer z-decimal z-c">0</span><span class="z-punctuation z-section z-group z-end z-c">)</span></span> <span class="z-keyword z-control z-flow z-return z-c">return</span> <span class="z-keyword z-operator z-arithmetic z-c">-</span><span class="z-constant z-numeric z-integer z-decimal z-c">1</span><span class="z-punctuation z-terminator z-c">;</span>
+  <span class="z-support z-type z-sys-types z-c">uint</span> flags <span class="z-keyword z-operator z-assignment z-c">=</span> <span class="z-meta z-function-call z-c"><span class="z-variable z-function z-c">PTE_FLAGS</span><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span></span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c"><span class="z-keyword z-operator z-c">*</span>pte</span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-end z-c">)</span></span></span><span class="z-punctuation z-terminator z-c">;</span>
+
+  uint64 pa <span class="z-keyword z-operator z-assignment z-c">=</span> <span class="z-meta z-function-call z-c"><span class="z-variable z-function z-c">PTE2PA</span><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span></span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c"><span class="z-keyword z-operator z-c">*</span>pte</span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-end z-c">)</span></span></span><span class="z-punctuation z-terminator z-c">;</span>
+
+  <span class="z-storage z-type z-c">char</span> <span class="z-keyword z-operator z-c">*</span>mem <span class="z-keyword z-operator z-assignment z-c">=</span> <span class="z-meta z-function-call z-c"><span class="z-variable z-function z-c">kalloc</span><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span></span></span><span class="z-meta z-function-call z-c"></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-end z-c">)</span></span></span><span class="z-punctuation z-terminator z-c">;</span>
+  <span class="z-keyword z-control z-c">if</span> <span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span>mem <span class="z-keyword z-operator z-comparison z-c">==</span> <span class="z-constant z-numeric z-integer z-decimal z-c">0</span><span class="z-punctuation z-section z-group z-end z-c">)</span></span> <span class="z-keyword z-control z-flow z-return z-c">return</span> <span class="z-keyword z-operator z-arithmetic z-c">-</span><span class="z-constant z-numeric z-integer z-decimal z-c">1</span><span class="z-punctuation z-terminator z-c">;</span>
+
+  va <span class="z-keyword z-operator z-assignment z-c">=</span> <span class="z-meta z-function-call z-c"><span class="z-variable z-function z-c">PGROUNDDOWN</span><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span></span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c">va</span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-end z-c">)</span></span></span><span class="z-punctuation z-terminator z-c">;</span>
+  flags <span class="z-keyword z-operator z-assignment z-augmented z-c">&=</span> <span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span><span class="z-keyword z-operator z-arithmetic z-c">~</span>PTE_C<span class="z-punctuation z-section z-group z-end z-c">)</span></span><span class="z-punctuation z-terminator z-c">;</span>
+  flags <span class="z-keyword z-operator z-assignment z-augmented z-c">|=</span> PTE_W<span class="z-punctuation z-terminator z-c">;</span>
+
+  <span class="z-meta z-function-call z-c"><span class="z-support z-function z-C99 z-c">memmove</span><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span></span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c">mem<span class="z-punctuation z-separator z-c">,</span> <span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span><span class="z-storage z-type z-c">char</span><span class="z-keyword z-operator z-c">*</span><span class="z-punctuation z-section z-group z-end z-c">)</span></span>pa<span class="z-punctuation z-separator z-c">,</span> PGSIZE</span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-end z-c">)</span></span></span><span class="z-punctuation z-terminator z-c">;</span>
+  <span class="z-meta z-function-call z-c"><span class="z-variable z-function z-c">uvmunmap</span><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span></span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c">pgtbl<span class="z-punctuation z-separator z-c">,</span> va<span class="z-punctuation z-separator z-c">,</span> <span class="z-constant z-numeric z-integer z-decimal z-c">1</span><span class="z-punctuation z-separator z-c">,</span> <span class="z-constant z-numeric z-integer z-decimal z-c">1</span></span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-end z-c">)</span></span></span><span class="z-punctuation z-terminator z-c">;</span>    <span class="z-comment z-line z-double-slash z-c"><span class="z-punctuation z-definition z-comment z-c">//</span> !!!
+</span>  <span class="z-keyword z-control z-c">if</span> <span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span><span class="z-meta z-function-call z-c"><span class="z-variable z-function z-c">mappages</span><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span></span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c">pgtbl<span class="z-punctuation z-separator z-c">,</span> va<span class="z-punctuation z-separator z-c">,</span> PGSIZE<span class="z-punctuation z-separator z-c">,</span> <span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span>uint64<span class="z-punctuation z-section z-group z-end z-c">)</span></span>mem<span class="z-punctuation z-separator z-c">,</span> flags</span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-end z-c">)</span></span></span> <span class="z-keyword z-operator z-comparison z-c"><</span> <span class="z-constant z-numeric z-integer z-decimal z-c">0</span><span class="z-punctuation z-section z-group z-end z-c">)</span></span> <span class="z-meta z-block z-c"><span class="z-punctuation z-section z-block z-begin z-c">{</span>
+    <span class="z-meta z-function-call z-c"><span class="z-variable z-function z-c">kfree</span><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-begin z-c">(</span></span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c">mem</span></span><span class="z-meta z-function-call z-c"><span class="z-meta z-group z-c"><span class="z-punctuation z-section z-group z-end z-c">)</span></span></span><span class="z-punctuation z-terminator z-c">;</span>
+    <span class="z-keyword z-control z-flow z-return z-c">return</span> <span class="z-keyword z-operator z-arithmetic z-c">-</span><span class="z-constant z-numeric z-integer z-decimal z-c">1</span><span class="z-punctuation z-terminator z-c">;</span>
+  <span class="z-punctuation z-section z-block z-end z-c">}</span></span>
+  <span class="z-keyword z-control z-flow z-return z-c">return</span> <span class="z-constant z-numeric z-integer z-decimal z-c">0</span><span class="z-punctuation z-terminator z-c">;</span>
+</span></span><span class="z-meta z-function z-c"><span class="z-meta z-block z-c"><span class="z-punctuation z-section z-block z-end z-c">}</span></span></span>
+</span></code></pre>
+<blockquote class="callout warning">
+    
+    <div class=icon>
+        <svg viewbox="0 0 24 24" height=20 width=20 xmlns=http://www.w3.org/2000/svg><path d="M12.865 3.00017L22.3912 19.5002C22.6674 19.9785 22.5035 20.5901 22.0252 20.8662C21.8732 20.954 21.7008 21.0002 21.5252 21.0002H2.47266C1.92037 21.0002 1.47266 20.5525 1.47266 20.0002C1.47266 19.8246 1.51886 19.6522 1.60663 19.5002L11.1329 3.00017C11.4091 2.52187 12.0206 2.358 12.4989 2.63414C12.651 2.72191 12.7772 2.84815 12.865 3.00017ZM4.20471 19.0002H19.7932L11.9989 5.50017L4.20471 19.0002ZM10.9989 16.0002H12.9989V18.0002H10.9989V16.0002ZM10.9989 9.00017H12.9989V14.0002H10.9989V9.00017Z" fill=currentColor></path></svg>
+    </div>
+    <div class=content>
+        
+        <p>这里有个小坑，也是因为我没注意。<code>uvmunmap(pgtbl, va, 1, 1)</code> 最后的那个参数得改成 1，用来减小对应页的引用计数，不然就会出大问题。就是这里卡了我好久，还是修行不太够hhh</p>
+
+    </div>
+</blockquote>
+<p>完成上面两个函数，在 <code>usertrap()</code> 中就写的很舒服了：</p>
+<pre class="language-diff z-code" data-lang=diff><code class=language-diff data-lang=diff><span class="z-source z-diff"><span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-65,6 +97,10</span> <span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-entity z-name z-section z-diff">usertrap(void)</span>
+</span></span>     intr_on();
+ 
+     syscall();
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  } else if (r_scause() == 15 && cow_uncopied(p->pagetable, r_stval())) {
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>    if (cow_alloc(p->pagetable, r_stval()) < 0) {
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>      setkilled(p);
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>    }
+</span>   } else if((which_dev = devintr()) != 0){
+     // ok
+   } else {
+</span></code></pre>
+<h3 id=xiu-gai-copyout>修改 <code>copyout()</code><a aria-label="Anchor link for: xiu-gai-copyout" class=zola-anchor href=#xiu-gai-copyout style=visibility:hidden>#</a></h3>
+<p>上一节封装的函数立刻就能在 <code>copyout()</code> 中用到</p>
+<pre class="language-diff z-code" data-lang=diff><code class=language-diff data-lang=diff><span class="z-source z-diff"><span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-355,6 +352,12</span> <span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-entity z-name z-section z-diff">copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len)</span>
+</span></span> 
+   while(len > 0){
+     va0 = PGROUNDDOWN(dstva);
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>    if (cow_uncopied(pagetable, va0)) {
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>      if (cow_alloc(pagetable, va0) < 0) {
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>        return -1;
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>      }
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>    }
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>
+</span>     pa0 = walkaddr(pagetable, va0);
+     if(pa0 == 0)
+       return -1;
+</span></code></pre>
+<blockquote class="callout warning">
+    
+    <div class=icon>
+        <svg viewbox="0 0 24 24" height=20 width=20 xmlns=http://www.w3.org/2000/svg><path d="M12.865 3.00017L22.3912 19.5002C22.6674 19.9785 22.5035 20.5901 22.0252 20.8662C21.8732 20.954 21.7008 21.0002 21.5252 21.0002H2.47266C1.92037 21.0002 1.47266 20.5525 1.47266 20.0002C1.47266 19.8246 1.51886 19.6522 1.60663 19.5002L11.1329 3.00017C11.4091 2.52187 12.0206 2.358 12.4989 2.63414C12.651 2.72191 12.7772 2.84815 12.865 3.00017ZM4.20471 19.0002H19.7932L11.9989 5.50017L4.20471 19.0002ZM10.9989 16.0002H12.9989V18.0002H10.9989V16.0002ZM10.9989 9.00017H12.9989V14.0002H10.9989V9.00017Z" fill=currentColor></path></svg>
+    </div>
+    <div class=content>
+        
+        <p>注意 <code>cow_alloc()</code> 要放到 <code>walkaddr()</code> 前面哦。不然 <code>walkaddr()</code> 取到的是父进程的地址，而不是 <code>kalloc()</code> 后得到的新地址。</p>
+
+    </div>
+</blockquote><h3 id=tian-jia-yin-yong-ji-shu>添加引用计数<a aria-label="Anchor link for: tian-jia-yin-yong-ji-shu" class=zola-anchor href=#tian-jia-yin-yong-ji-shu style=visibility:hidden>#</a></h3>
+<p>为什么要进行引用计数呢？当实现了 COW 后，一个物理页可能会被多个进程使用，这时候如果哪个进程 <code>free</code> 掉这个页，其它进程就找不着这个页了，所以需要使用一个引用计数来管理物理页与页表的关系，<strong>只有当一个物理页不被任何页表引用时才进行 <code>free</code></strong>。引用计数在以下情况时会发生改变：</p>
+<ol>
+<li><code>kalloc()</code> 时会被设为 1</li>
+<li><code>kfree()</code> 时引用减少，如果为零则真的清除空间</li>
+<li>被其它进程引用（仅在 <code>fork()</code> 中）时引用增加</li>
+</ol>
+<sparkly-text><p>唯一需要注意的是数组 <code>ref_cnt</code> 的大小，我设为了 <code>PHYSTOP / PGSIZE</code>。</p>
+</sparkly-text><h3 id=quan-bu-dai-ma>全部代码<a aria-label="Anchor link for: quan-bu-dai-ma" class=zola-anchor href=#quan-bu-dai-ma style=visibility:hidden>#</a></h3>
+<p>具体细节看代码，注意我把 <code>usertests</code> 里的 <code>textwrite()</code> 给注释掉了，只有这个 case 我没法通过，哭哭</p>
+<pre class="language-diff z-code" data-lang=diff><code class=language-diff data-lang=diff><span class="z-source z-diff">diff --git a/kernel/defs.h b/kernel/defs.h
+index a3c962b..1935a1a 100644
+<span class="z-meta z-diff z-header z-from-file"><span class="z-meta z-header z-from-file z-diff"><span class="z-punctuation z-definition z-from-file z-diff">---</span> a/kernel/defs.h
+</span></span><span class="z-meta z-diff z-header z-to-file"><span class="z-meta z-header z-to-file z-diff"><span class="z-punctuation z-definition z-to-file z-diff">+++</span> b/kernel/defs.h
+</span></span><span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-63,6 +63,7</span> <span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-entity z-name z-section z-diff">void            ramdiskrw(struct buf*);</span>
+</span></span> void*           kalloc(void);
+ void            kfree(void *);
+ void            kinit(void);
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>void            ref_cnt_inc(uint64);
+</span> 
+ // log.c
+ void            initlog(int, struct superblock*);
+<span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-173,6 +174,8</span> <span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-entity z-name z-section z-diff">uint64          walkaddr(pagetable_t, uint64);</span>
+</span></span> int             copyout(pagetable_t, uint64, char *, uint64);
+ int             copyin(pagetable_t, char *, uint64, uint64);
+ int             copyinstr(pagetable_t, char *, uint64, uint64);
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>int             cow_uncopied(pagetable_t, uint64);
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>int             cow_alloc(pagetable_t, uint64);
+</span> 
+ // plic.c
+ void            plicinit(void);
+diff --git a/kernel/kalloc.c b/kernel/kalloc.c
+index 0699e7e..e323d58 100644
+<span class="z-meta z-diff z-header z-from-file"><span class="z-meta z-header z-from-file z-diff"><span class="z-punctuation z-definition z-from-file z-diff">---</span> a/kernel/kalloc.c
+</span></span><span class="z-meta z-diff z-header z-to-file"><span class="z-meta z-header z-to-file z-diff"><span class="z-punctuation z-definition z-to-file z-diff">+++</span> b/kernel/kalloc.c
+</span></span><span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-14,6 +14,17</span> <span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-entity z-name z-section z-diff">void freerange(void *pa_start, void *pa_end);</span>
+</span></span> extern char end[]; // first address after kernel.
+                    // defined by kernel.ld.
+ 
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>int ref_cnt[PHYSTOP / PGSIZE];
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>struct spinlock ref_cnt_lock;
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>#define REF_CNT(pa) ref_cnt[(uint64)pa / PGSIZE]
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>void ref_cnt_inc(uint64 pa) {
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  acquire(&ref_cnt_lock);
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  REF_CNT(pa)++;
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  release(&ref_cnt_lock);
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>}
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>
+</span> struct run {
+   struct run *next;
+ };
+<span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-27,7 +38,9</span> <span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-entity z-name z-section z-diff">void</span>
+</span></span> kinit()
+ {
+   initlock(&kmem.lock, "kmem");
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  initlock(&ref_cnt_lock, "ref_cnt");
+</span>   freerange(end, (void*)PHYSTOP);
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  memset(ref_cnt, 0, PHYSTOP / PGSIZE);
+</span> }
+ 
+ void
+<span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-51,6 +64,14</span> <span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-entity z-name z-section z-diff">kfree(void *pa)</span>
+</span></span>   if(((uint64)pa % PGSIZE) != 0 || (char*)pa < end || (uint64)pa >= PHYSTOP)
+     panic("kfree");
+ 
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  acquire(&ref_cnt_lock);
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  if (REF_CNT(pa) > 1) {
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>    REF_CNT(pa)--;
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>    release(&ref_cnt_lock);
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>    return;
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  }
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  release(&ref_cnt_lock);
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>
+</span>   // Fill with junk to catch dangling refs.
+   memset(pa, 1, PGSIZE);
+ 
+<span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-76,7 +97,11</span> <span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-entity z-name z-section z-diff">kalloc(void)</span>
+</span></span>     kmem.freelist = r->next;
+   release(&kmem.lock);
+ 
+<span class="z-markup z-deleted z-diff"><span class="z-punctuation z-definition z-deleted z-diff">-</span>  if(r)
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  if(r) {
+</span>     memset((char*)r, 5, PGSIZE); // fill with junk
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>    acquire(&ref_cnt_lock);
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>    REF_CNT(r) = 1;
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>    release(&ref_cnt_lock);
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  }
+</span>   return (void*)r;
+ }
+diff --git a/kernel/riscv.h b/kernel/riscv.h
+index 20a01db..0eb9183 100644
+<span class="z-meta z-diff z-header z-from-file"><span class="z-meta z-header z-from-file z-diff"><span class="z-punctuation z-definition z-from-file z-diff">---</span> a/kernel/riscv.h
+</span></span><span class="z-meta z-diff z-header z-to-file"><span class="z-meta z-header z-to-file z-diff"><span class="z-punctuation z-definition z-to-file z-diff">+++</span> b/kernel/riscv.h
+</span></span><span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-343,6 +343,7</span> <span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-entity z-name z-section z-diff">typedef uint64 *pagetable_t; // 512 PTEs</span>
+</span></span> #define PTE_W (1L << 2)
+ #define PTE_X (1L << 3)
+ #define PTE_U (1L << 4) // user can access
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>#define PTE_C (1L << 8) // cow page
+</span> 
+ // shift a physical address to the right place for a PTE.
+ #define PA2PTE(pa) ((((uint64)pa) >> 12) << 10)
+diff --git a/kernel/trap.c b/kernel/trap.c
+index 512c850..4f56f9d 100644
+<span class="z-meta z-diff z-header z-from-file"><span class="z-meta z-header z-from-file z-diff"><span class="z-punctuation z-definition z-from-file z-diff">---</span> a/kernel/trap.c
+</span></span><span class="z-meta z-diff z-header z-to-file"><span class="z-meta z-header z-to-file z-diff"><span class="z-punctuation z-definition z-to-file z-diff">+++</span> b/kernel/trap.c
+</span></span><span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-29,6 +29,38</span> <span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-entity z-name z-section z-diff">trapinithart(void)</span>
+</span></span>   w_stvec((uint64)kernelvec);
+ }
+ 
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>int cow_uncopied(pagetable_t pgtbl, uint64 va) {
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  if (va >= MAXVA) return 0;
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  pte_t * pte = walk(pgtbl, va, 0);
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  if (pte == 0) return 0;
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  if ((*pte & PTE_V) == 0) return 0;
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  if ((*pte & PTE_U) == 0) return 0;
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  return ((*pte) & PTE_C);
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>}
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>int cow_alloc(pagetable_t pgtbl, uint64 va) {
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  pte_t *pte = walk(pgtbl, va, 0);
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  if (pte == 0) return -1;
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  uint flags = PTE_FLAGS(*pte);
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  uint64 pa = PTE2PA(*pte);
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  char *mem = kalloc();
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  if (mem == 0) return -1;
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  va = PGROUNDDOWN(va);
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  flags &= (~PTE_C);
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  flags |= PTE_W;
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  memmove(mem, (char*)pa, PGSIZE);
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  uvmunmap(pgtbl, va, 1, 1);
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  if (mappages(pgtbl, va, PGSIZE, (uint64)mem, flags) < 0) {
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>    kfree(mem);
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>    return -1;
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  }
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  return 0;
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>}
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>
+</span> //
+ // handle an interrupt, exception, or system call from user space.
+ // called from trampoline.S
+<span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-65,6 +97,10</span> <span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-entity z-name z-section z-diff">usertrap(void)</span>
+</span></span>     intr_on();
+ 
+     syscall();
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  } else if (r_scause() == 15 && cow_uncopied(p->pagetable, r_stval())) {
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>    if (cow_alloc(p->pagetable, r_stval()) < 0) {
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>      setkilled(p);
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>    }
+</span>   } else if((which_dev = devintr()) != 0){
+     // ok
+   } else {
+diff --git a/kernel/vm.c b/kernel/vm.c
+index 9f69783..918b1d9 100644
+<span class="z-meta z-diff z-header z-from-file"><span class="z-meta z-header z-from-file z-diff"><span class="z-punctuation z-definition z-from-file z-diff">---</span> a/kernel/vm.c
+</span></span><span class="z-meta z-diff z-header z-to-file"><span class="z-meta z-header z-to-file z-diff"><span class="z-punctuation z-definition z-to-file z-diff">+++</span> b/kernel/vm.c
+</span></span><span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-308,7 +308,6</span> <span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-entity z-name z-section z-diff">uvmcopy(pagetable_t old, pagetable_t new, uint64 sz)</span>
+</span></span>   pte_t *pte;
+   uint64 pa, i;
+   uint flags;
+<span class="z-markup z-deleted z-diff"><span class="z-punctuation z-definition z-deleted z-diff">-</span>  char *mem;
+</span> 
+   for(i = 0; i < sz; i += PGSIZE){
+     if((pte = walk(old, i, 0)) == 0)
+<span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-316,20 +315,18</span> <span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-entity z-name z-section z-diff">uvmcopy(pagetable_t old, pagetable_t new, uint64 sz)</span>
+</span></span>     if((*pte & PTE_V) == 0)
+       panic("uvmcopy: page not present");
+     pa = PTE2PA(*pte);
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>    *pte &= (~PTE_W);
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>    *pte |= PTE_C;
+</span>     flags = PTE_FLAGS(*pte);
+<span class="z-markup z-deleted z-diff"><span class="z-punctuation z-definition z-deleted z-diff">-</span>    if((mem = kalloc()) == 0)
+</span><span class="z-markup z-deleted z-diff"><span class="z-punctuation z-definition z-deleted z-diff">-</span>      goto err;
+</span><span class="z-markup z-deleted z-diff"><span class="z-punctuation z-definition z-deleted z-diff">-</span>    memmove(mem, (char*)pa, PGSIZE);
+</span><span class="z-markup z-deleted z-diff"><span class="z-punctuation z-definition z-deleted z-diff">-</span>    if(mappages(new, i, PGSIZE, (uint64)mem, flags) != 0){
+</span><span class="z-markup z-deleted z-diff"><span class="z-punctuation z-definition z-deleted z-diff">-</span>      kfree(mem);
+</span><span class="z-markup z-deleted z-diff"><span class="z-punctuation z-definition z-deleted z-diff">-</span>      goto err;
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>    if (mappages(new, i, PGSIZE, (uint64)pa, flags) != 0) {
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>      printf("uvmcopy: failed\n");
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>      uvmunmap(new, 0, i / PGSIZE, 1);
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>      return -1;
+</span>     }
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>    ref_cnt_inc(pa);
+</span>   }
+   return 0;
+<span class="z-markup z-deleted z-diff"><span class="z-punctuation z-definition z-deleted z-diff">-</span>
+</span><span class="z-markup z-deleted z-diff"><span class="z-punctuation z-definition z-deleted z-diff">-</span> err:
+</span><span class="z-markup z-deleted z-diff"><span class="z-punctuation z-definition z-deleted z-diff">-</span>  uvmunmap(new, 0, i / PGSIZE, 1);
+</span><span class="z-markup z-deleted z-diff"><span class="z-punctuation z-definition z-deleted z-diff">-</span>  return -1;
+</span> }
+ 
+ // mark a PTE invalid for user access.
+<span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-355,6 +352,12</span> <span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-entity z-name z-section z-diff">copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len)</span>
+</span></span> 
+   while(len > 0){
+     va0 = PGROUNDDOWN(dstva);
+<span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>    if (cow_uncopied(pagetable, va0)) {
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>      if (cow_alloc(pagetable, va0) < 0) {
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>        return -1;
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>      }
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>    }
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>
+</span>     pa0 = walkaddr(pagetable, va0);
+     if(pa0 == 0)
+       return -1;
+diff --git a/time.txt b/time.txt
+new file mode 100644
+index 0000000..3f10ffe
+<span class="z-meta z-diff z-header z-from-file"><span class="z-meta z-header z-from-file z-diff"><span class="z-punctuation z-definition z-from-file z-diff">---</span> /dev/null
+</span></span><span class="z-meta z-diff z-header z-to-file"><span class="z-meta z-header z-to-file z-diff"><span class="z-punctuation z-definition z-to-file z-diff">+++</span> b/time.txt
+</span></span><span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-0,0 +1</span> <span class="z-punctuation z-definition z-range z-diff">@@</span>
+</span></span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>15
+</span>\ No newline at end of file
+diff --git a/user/usertests.c b/user/usertests.c
+index 7d3e9bc..301b631 100644
+<span class="z-meta z-diff z-header z-from-file"><span class="z-meta z-header z-from-file z-diff"><span class="z-punctuation z-definition z-from-file z-diff">---</span> a/user/usertests.c
+</span></span><span class="z-meta z-diff z-header z-to-file"><span class="z-meta z-header z-to-file z-diff"><span class="z-punctuation z-definition z-to-file z-diff">+++</span> b/user/usertests.c
+</span></span><span class="z-meta z-diff z-range z-unified"><span class="z-meta z-range z-unified z-diff"><span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-meta z-toc-list z-line-number z-diff">-2629,7 +2629,7</span> <span class="z-punctuation z-definition z-range z-diff">@@</span> <span class="z-entity z-name z-section z-diff">struct test {</span>
+</span></span>   {bigargtest, "bigargtest"},
+   {argptest, "argptest"},
+   {stacktest, "stacktest"},
+<span class="z-markup z-deleted z-diff"><span class="z-punctuation z-definition z-deleted z-diff">-</span>  {textwrite, "textwrite"},
+</span><span class="z-markup z-inserted z-diff"><span class="z-punctuation z-definition z-inserted z-diff">+</span>  // {textwrite, "textwrite"},
+</span>   {pgbug, "pgbug" },
+   {sbrkbugs, "sbrkbugs" },
+   {sbrklast, "sbrklast"},
+</span></code></pre>
+
+        
+      
+
+      
+      
+      <div class=giscus></div>
+      <script async crossorigin data-category=Announcements data-category-id=DIC_kwDOLNtmis4Cc7ki data-emit-metadata=0 data-input-position=bottom data-lang=en data-loading=lazy data-mapping=pathname data-reactions-enabled=1 data-repo=MiaoHN/MiaoHN.github.io data-repo-id=R_kgDOLNtmig data-strict=0 data-theme=https://miaohn.github.io/giscus_light.css src=https://giscus.app/client.js></script>
+      
+    
+
+    <footer>
+  <div class=copyright>
+    <p>© 2023 MiaoHN</p>
+
+  </div>
+  
+  <div class=credits>
+    powered by
+    <a rel="noreferrer noopener" href=https://www.getzola.org target=_blank>zola</a>
+    and
+    <a rel="noreferrer noopener" href=https://github.com/isunjn/serene target=_blank>serene</a>
+  </div>
+  
+</footer>
+  
+
+
+  
+<script src=/js/lightense.min.js></script>
+
+<script type=module>
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true });
+</script>
+
+
+  <script src=/js/main.js></script>
+
+
+

@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+
+    
+        <title>
+             MIT 6.S081 | 0x08 Locks
+            
+        </title>
+
+        
+            <meta property="og:title" content="MIT 6.S081 | 0x08 Locks" />
+        
+    
+
+    
+        
+            <meta property="og:description" content="操作系统的一生之敌——并发与锁" />
+        
+    
+
+    
+        
+            <meta name="description" content="操作系统的一生之敌——并发与锁" />
+        
+    
+
+    
+         <link rel="icon" type="image/png" href=&#x2F;icon&#x2F;favicon.png />
+    
+
+    
+
+    
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-6YGDB8SLBT"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', 'G-6YGDB8SLBT');
+        </script>
+    
+
+    
+    
+
+
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@1,500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Sans&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto+Mono" rel="stylesheet">
+
+    <link rel="stylesheet" type="text/css" media="screen" href=https://miaohn.github.io/main.css />
+
+    
+        <link
+            rel="stylesheet"
+            id="darkModeStyle"
+            type="text/css"
+            href=https://miaohn.github.io/dark.css
+            
+            
+        />
+    
+
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            renderMathInElement(document.body, {
+            // customised options
+            // • auto-render specific keys, e.g.:
+            delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false},
+                {left: '\\(', right: '\\)', display: false},
+                {left: '\\[', right: '\\]', display: true}
+            ],
+            // • rendering keys, e.g.:
+            throwOnError : false
+            });
+        });
+    </script>
+    
+
+         
+		<link href="https://unpkg.com/highlightjs-badge/highlightjs/styles/railscasts.css" rel="stylesheet">
+		<!-- https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.1.1/build/styles/  for min version -->
+		<script src="https://unpkg.com/highlightjs-badge/highlightjs/highlight.pack.js"></script>
+		<script src="https://unpkg.com/highlightjs-badge/highlightjs-badge.min.js"></script>
+		<script>
+			var pres = document.querySelectorAll("pre>code");
+			for (var i = 0; i < pres.length; i++) {
+				hljs.highlightBlock(pres[i]);
+			}
+		</script>
+		
+			<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js"></script>
+			<script>
+				var options = {
+					copyIconClass: "gg-clipboard",
+					checkIconClass: "gg-check"
+				};
+				window.highlightJsBadge(options);
+			</script>
+		
+
+	
+
+
+    
+
+
+</head>
+
+
+<body>
+    <div class="content">
+        <header>
+    <div class="main" id="main_title">
+        <a href=https:&#x2F;&#x2F;miaohn.github.io>MiaoHN&#x27;s Blog</a>
+    </div>
+
+    <nav>
+        
+            <a href=&#x2F;posts>Posts</a>
+        
+            <a href=&#x2F;tags>Tags</a>
+        
+            <a href=&#x2F;about>About</a>
+        
+
+        
+
+        
+    </nav>
+</header>
+
+
+        
+    
+<main>
+    <article>
+        <div class="title">
+            <h1 class="title">MIT 6.S081 | 0x08 Locks</h1>
+            <div class="meta">
+                 2024-07-04
+
+                
+            </div>
+        </div>
+
+        
+
+        <section class="body">
+            <ul>
+<li>链接：<a href="https://pdos.csail.mit.edu/6.S081/2021/labs/lock.html">https://pdos.csail.mit.edu/6.S081/2021/labs/lock.html</a></li>
+<li>难度：🟦🟥</li>
+</ul>
+<div class="callout callout-tip">
+  <p>Before writing code, make sure to read the following parts from the <a href="https://pdos.csail.mit.edu/6.S081/2021/xv6/book-riscv-rev2.pdf">xv6 book</a>:</p>
+<ul>
+<li>Chapter 6: &quot;Locking&quot; and the corresponding code.</li>
+<li>Section 3.5: &quot;Code: Physical memory allocator&quot;</li>
+<li>Section 8.1 through 8.3: &quot;Overview&quot;, &quot;Buffer cache layer&quot;, and &quot;Code: Buffer cache&quot;</li>
+</ul>
+
+</div><h2 id="memory-allocator">🟦 Memory allocator</h2>
+<blockquote>
+<p>Your job is to implement per-CPU freelists, and stealing when a CPU's free list is empty. You must give all of your locks names that start with &quot;kmem&quot;. That is, you should call <code>initlock</code> for each of your locks, and pass a name that starts with &quot;kmem&quot;. Run kalloctest to see if your implementation has reduced lock contention. To check that it can still allocate all of memory, run <code>usertests sbrkmuch</code>. Your output will look similar to that shown below, with much-reduced contention in total on kmem locks, although the specific numbers will differ. Make sure all tests in <code>usertests</code> pass. <code>make grade</code> should say that the kalloctests pass.</p>
+</blockquote>
+<h3 id="fen-xi">分析</h3>
+<p>xv6 使用 <code>kalloc</code>/<code>kfree</code> 来对内存进行分配和释放，全局只用一把锁进行管理：</p>
+<pre data-lang="c" style="background-color:#282c34;color:#dcdfe4;" class="language-c "><code class="language-c" data-lang="c"><span style="color:#c678dd;">struct </span><span>run {
+</span><span>  </span><span style="color:#c678dd;">struct </span><span>run *next;
+</span><span>};
+</span><span>
+</span><span style="color:#c678dd;">struct </span><span>{
+</span><span>  </span><span style="color:#c678dd;">struct</span><span> spinlock lock;
+</span><span>  </span><span style="color:#c678dd;">struct </span><span>run *freelist;
+</span><span>} kmem;
+</span></code></pre>
+<p>这种实现简单直接，但是在遇到多核情况下时，对 <code>kmem.lock</code> 这把锁的竞争会很激烈。所以这一 Part 的任务就是<strong>想一个办法减少锁的竞争</strong>。</p>
+<p>题目也给出了解决的思路，就是为每个 CPU 分别维护一个 freelist 和对应的锁，这样每个锁的粒度就会变小，锁的竞争也就减小了。整理一下，我们需要做的工作有：</p>
+<ol>
+<li>为每个 CPU 分别维护一个 <code>freelist</code> 和 <code>lock</code></li>
+<li>当某个 CPU 的 <code>freelist</code> 为空时，从其他 CPU 的 <code>freelist</code> 中偷取一些</li>
+</ol>
+<p>第一部分直接就能写出来，将 <code>kmem</code> 这个结构体变成一个数组就行，CPU 的数量已经用宏定义好了：</p>
+<pre data-lang="c" style="background-color:#282c34;color:#dcdfe4;" class="language-c "><code class="language-c" data-lang="c"><span style="color:#c678dd;">struct </span><span>{
+</span><span>  </span><span style="color:#c678dd;">struct</span><span> spinlock lock;
+</span><span>  </span><span style="color:#c678dd;">struct </span><span>run *freelist;
+</span><span>} kmem[NCPU];
+</span></code></pre>
+<p>这样每个 CPU 都有了对应的 <code>freelist</code> 与 <code>lock</code>，在 <code>kalloc</code>/<code>kfree</code> 的时候，使用 <code>cpuid()</code> 获取对应的 CPU 号进行操作就好。剩下就是第二个部分的工作了：当一个 CPU 的 <code>freelist</code> 为空时，怎么从其他的 CPU 那里“偷”一些空间出来？</p>
+<p>这个时候就要遍历 <code>kmem</code> 的其他 <code>freelist</code> 了，在遍历的时候记得跳过自己的 <code>cpuid</code>，在读取每个 CPU 的 <code>freelist</code> 时也要记得加锁。具体的细节可以看下面的代码。</p>
+<h3 id="dai-ma">代码</h3>
+<pre data-lang="diff" style="background-color:#282c34;color:#dcdfe4;" class="language-diff "><code class="language-diff" data-lang="diff"><span>diff --git a/kernel/kalloc.c b/kernel/kalloc.c
+</span><span>index 0699e7e..ce21891 100644
+</span><span>--- a/kernel/kalloc.c
+</span><span>+++ b/kernel/kalloc.c
+</span><span>@@ -9,6 +9,8 @@
+</span><span> #include &quot;riscv.h&quot;
+</span><span> #include &quot;defs.h&quot;
+</span><span> 
+</span><span style="color:#98c379;">+#define TOTAL_STEAL 64
+</span><span style="color:#98c379;">+
+</span><span> void freerange(void *pa_start, void *pa_end);
+</span><span> 
+</span><span> extern char end[]; // first address after kernel.
+</span><span>@@ -21,12 +23,25 @@ </span><span style="color:#61afef;">struct run {
+</span><span> struct {
+</span><span>   struct spinlock lock;
+</span><span>   struct run *freelist;
+</span><span style="color:#e06c75;">-} kmem;
+</span><span style="color:#98c379;">+} kmem[NCPU];
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+char *kmem_names[] = {
+</span><span style="color:#98c379;">+  &quot;kmem_lock_0&quot;,
+</span><span style="color:#98c379;">+  &quot;kmem_lock_1&quot;,
+</span><span style="color:#98c379;">+  &quot;kmem_lock_2&quot;,
+</span><span style="color:#98c379;">+  &quot;kmem_lock_3&quot;,
+</span><span style="color:#98c379;">+  &quot;kmem_lock_4&quot;,
+</span><span style="color:#98c379;">+  &quot;kmem_lock_5&quot;,
+</span><span style="color:#98c379;">+  &quot;kmem_lock_6&quot;,
+</span><span style="color:#98c379;">+  &quot;kmem_lock_7&quot;,
+</span><span style="color:#98c379;">+};
+</span><span> 
+</span><span> void
+</span><span> kinit()
+</span><span> {
+</span><span style="color:#e06c75;">-  initlock(&amp;kmem.lock, &quot;kmem&quot;);
+</span><span style="color:#98c379;">+  for (int i = 0; i &lt; NCPU; i++) {
+</span><span style="color:#98c379;">+    initlock(&amp;kmem[i].lock, kmem_names[i]);
+</span><span style="color:#98c379;">+  }
+</span><span>   freerange(end, (void*)PHYSTOP);
+</span><span> }
+</span><span> 
+</span><span>@@ -35,8 +50,10 @@ </span><span style="color:#61afef;">freerange(void *pa_start, void *pa_end)
+</span><span> {
+</span><span>   char *p;
+</span><span>   p = (char*)PGROUNDUP((uint64)pa_start);
+</span><span style="color:#98c379;">+  push_off();
+</span><span>   for(; p + PGSIZE &lt;= (char*)pa_end; p += PGSIZE)
+</span><span>     kfree(p);
+</span><span style="color:#98c379;">+  pop_off();
+</span><span> }
+</span><span> 
+</span><span> // Free the page of physical memory pointed at by pa,
+</span><span>@@ -56,10 +73,13 @@ </span><span style="color:#61afef;">kfree(void *pa)
+</span><span> 
+</span><span>   r = (struct run*)pa;
+</span><span> 
+</span><span style="color:#e06c75;">-  acquire(&amp;kmem.lock);
+</span><span style="color:#e06c75;">-  r-&gt;next = kmem.freelist;
+</span><span style="color:#e06c75;">-  kmem.freelist = r;
+</span><span style="color:#e06c75;">-  release(&amp;kmem.lock);
+</span><span style="color:#98c379;">+  push_off();
+</span><span style="color:#98c379;">+  int cpu_id = cpuid();
+</span><span style="color:#98c379;">+  acquire(&amp;kmem[cpu_id].lock);
+</span><span style="color:#98c379;">+  r-&gt;next = kmem[cpu_id].freelist;
+</span><span style="color:#98c379;">+  kmem[cpu_id].freelist = r;
+</span><span style="color:#98c379;">+  release(&amp;kmem[cpu_id].lock);
+</span><span style="color:#98c379;">+  pop_off();
+</span><span> }
+</span><span> 
+</span><span> // Allocate one 4096-byte page of physical memory.
+</span><span>@@ -70,11 +90,37 @@ </span><span style="color:#61afef;">kalloc(void)
+</span><span> {
+</span><span>   struct run *r;
+</span><span> 
+</span><span style="color:#e06c75;">-  acquire(&amp;kmem.lock);
+</span><span style="color:#e06c75;">-  r = kmem.freelist;
+</span><span style="color:#e06c75;">-  if(r)
+</span><span style="color:#e06c75;">-    kmem.freelist = r-&gt;next;
+</span><span style="color:#e06c75;">-  release(&amp;kmem.lock);
+</span><span style="color:#98c379;">+  push_off();
+</span><span style="color:#98c379;">+  int cpu_id = cpuid();
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  acquire(&amp;kmem[cpu_id].lock);
+</span><span style="color:#98c379;">+  if (!kmem[cpu_id].freelist) {
+</span><span style="color:#98c379;">+    // no enough space, try to steal space from other cpu
+</span><span style="color:#98c379;">+    int list_left = TOTAL_STEAL;
+</span><span style="color:#98c379;">+    for (int i = 0; i &lt; NCPU; i++) {
+</span><span style="color:#98c379;">+      if (i == cpu_id) continue;
+</span><span style="color:#98c379;">+      acquire(&amp;kmem[i].lock);
+</span><span style="color:#98c379;">+      struct run *r_other_cpu = kmem[i].freelist;
+</span><span style="color:#98c379;">+      while (r_other_cpu &amp;&amp; list_left) {
+</span><span style="color:#98c379;">+        // find free space, steal!
+</span><span style="color:#98c379;">+        kmem[i].freelist = r_other_cpu-&gt;next;
+</span><span style="color:#98c379;">+        r_other_cpu-&gt;next = kmem[cpu_id].freelist;
+</span><span style="color:#98c379;">+        kmem[cpu_id].freelist = r_other_cpu;
+</span><span style="color:#98c379;">+        r_other_cpu = kmem[i].freelist;
+</span><span style="color:#98c379;">+        list_left--;
+</span><span style="color:#98c379;">+      }
+</span><span style="color:#98c379;">+      release(&amp;kmem[i].lock);
+</span><span style="color:#98c379;">+      if (list_left == 0) break;
+</span><span style="color:#98c379;">+    }
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+  release(&amp;kmem[cpu_id].lock);
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  r = kmem[cpu_id].freelist;
+</span><span style="color:#98c379;">+  if(r) {
+</span><span style="color:#98c379;">+    kmem[cpu_id].freelist = r-&gt;next;
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  pop_off();
+</span><span> 
+</span><span>   if(r)
+</span><span>     memset((char*)r, 5, PGSIZE); // fill with junk
+</span></code></pre>
+<h2 id="buffer-cache">🟥 Buffer cache</h2>
+<blockquote>
+<p>Modify the block cache so that the number of <code>acquire</code> loop iterations for all locks in the bcache is close to zero when running <code>bcachetest</code>. Ideally the sum of the counts for all locks involved in the block cache should be zero, but it's OK if the sum is less than 500. Modify <code>bget</code> and <code>brelse</code> so that concurrent lookups and releases for different blocks that are in the bcache are unlikely to conflict on locks (e.g., don't all have to wait for <code>bcache.lock</code>). You must maintain the invariant that at most one copy of each block is cached. When you are done, your output should be similar to that shown below (though not identical). Make sure usertests still passes. <code>make grade</code> should pass all tests when you are done.</p>
+</blockquote>
+<h3 id="fen-xi-1">分析</h3>
+<p>操作系统在读取硬盘数据时，会将读取到的数据缓存到内存中，这样下次再读取相同的数据时就可以直接从内存中读取，而不用再次从硬盘中读取。这个缓存就是缓冲区缓存（Buffer Cache），在 xv6 中是通过 <code>bcache</code> 这个结构体来实现的：</p>
+<pre data-lang="c" style="background-color:#282c34;color:#dcdfe4;" class="language-c "><code class="language-c" data-lang="c"><span style="color:#c678dd;">struct </span><span>{
+</span><span>  </span><span style="color:#c678dd;">struct</span><span> spinlock lock;
+</span><span>  </span><span style="color:#c678dd;">struct</span><span> buf buf[NBUF];
+</span><span>
+</span><span>  </span><span style="color:#5c6370;">// Linked list of all buffers, through prev/next.
+</span><span>  </span><span style="color:#5c6370;">// head.next is most recently used.
+</span><span>  </span><span style="color:#c678dd;">struct</span><span> buf head;
+</span><span>} bcache;
+</span></code></pre>
+<p>这个 <code>bcache</code> 是真的在多 CPU 多进程中共享的，全局只有一个锁：<code>bcache.lock</code>，锁竞争很激烈。提示有说用哈希表来减少竞争，其实就是一个大锁变成多个小锁，先设置 <code>NBUCKET</code> 个桶，每个桶对应一个锁，然后在 <code>bget</code> 和 <code>brelse</code> 中对这些锁进行操作。下面是修改后的 <code>bcache</code> 结构体：</p>
+<pre data-lang="c" style="background-color:#282c34;color:#dcdfe4;" class="language-c "><code class="language-c" data-lang="c"><span style="color:#c678dd;">struct </span><span>{
+</span><span>  </span><span style="color:#c678dd;">struct</span><span> spinlock lock;
+</span><span>  </span><span style="color:#c678dd;">struct</span><span> buf buf[NBUF];
+</span><span>
+</span><span>  </span><span style="color:#5c6370;">// Linked list of all buffers, through prev/next.
+</span><span>  </span><span style="color:#5c6370;">// head.next is most recently used.
+</span><span>  </span><span style="color:#c678dd;">struct</span><span> buf head[NBUCKET];
+</span><span>  </span><span style="color:#c678dd;">struct</span><span> spinlock head_lock[NBUCKET];
+</span><span>} bcache;
+</span></code></pre>
+<p>原先只有一个 <code>bcache.head</code>，LRU 算法实现起来很方便。但是在有多个桶的时候，LRU 算法就比较捉急，因为每个桶都可能有一个最少使用的块，或者全局最少使用的块和当前操作的桶不在一个桶中，逻辑很复杂。提示也贴心地指出了如何解决：直接记录 buf 上次使用的 <code>ticks</code> 即可。找到全局 ticks 最少的那个 buf，然后将其放到当前桶的最前面。</p>
+<p>最后很可能出问题的地方就是如何保证不发生死锁，这里有个<a href="https://blog.miigon.net/posts/s081-lab8-locks/#buffer-cache-hard">博客</a>讨论了这个问题，可以仔细去看看。总之一定要仔细考虑每个锁的顺序，不要出现循环等待的情况。</p>
+<h3 id="dai-ma-1">代码</h3>
+<pre data-lang="diff" style="background-color:#282c34;color:#dcdfe4;" class="language-diff "><code class="language-diff" data-lang="diff"><span>diff --git a/kernel/bio.c b/kernel/bio.c
+</span><span>index 60d91a6..255d23e 100644
+</span><span>--- a/kernel/bio.c
+</span><span>+++ b/kernel/bio.c
+</span><span>@@ -23,32 +23,57 @@
+</span><span> #include &quot;fs.h&quot;
+</span><span> #include &quot;buf.h&quot;
+</span><span> 
+</span><span style="color:#98c379;">+#define NBUCKET 13
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+extern uint ticks;
+</span><span style="color:#98c379;">+
+</span><span> struct {
+</span><span style="color:#e06c75;">-  struct spinlock lock;
+</span><span>   struct buf buf[NBUF];
+</span><span> 
+</span><span>   // Linked list of all buffers, through prev/next.
+</span><span>   // Sorted by how recently the buffer was used.
+</span><span>   // head.next is most recent, head.prev is least.
+</span><span style="color:#e06c75;">-  struct buf head;
+</span><span style="color:#98c379;">+  struct buf head[NBUCKET];
+</span><span style="color:#98c379;">+  struct spinlock head_lock[NBUCKET];
+</span><span> } bcache;
+</span><span> 
+</span><span style="color:#98c379;">+char * head_lock_name[] = {
+</span><span style="color:#98c379;">+  &quot;bcache_head_lock_0&quot;,
+</span><span style="color:#98c379;">+  &quot;bcache_head_lock_1&quot;,
+</span><span style="color:#98c379;">+  &quot;bcache_head_lock_2&quot;,
+</span><span style="color:#98c379;">+  &quot;bcache_head_lock_3&quot;,
+</span><span style="color:#98c379;">+  &quot;bcache_head_lock_4&quot;,
+</span><span style="color:#98c379;">+  &quot;bcache_head_lock_5&quot;,
+</span><span style="color:#98c379;">+  &quot;bcache_head_lock_6&quot;,
+</span><span style="color:#98c379;">+  &quot;bcache_head_lock_7&quot;,
+</span><span style="color:#98c379;">+  &quot;bcache_head_lock_8&quot;,
+</span><span style="color:#98c379;">+  &quot;bcache_head_lock_9&quot;,
+</span><span style="color:#98c379;">+  &quot;bcache_head_lock_10&quot;,
+</span><span style="color:#98c379;">+  &quot;bcache_head_lock_11&quot;,
+</span><span style="color:#98c379;">+  &quot;bcache_head_lock_12&quot;,
+</span><span style="color:#98c379;">+};
+</span><span style="color:#98c379;">+
+</span><span> void
+</span><span> binit(void)
+</span><span> {
+</span><span>   struct buf *b;
+</span><span> 
+</span><span style="color:#e06c75;">-  initlock(&amp;bcache.lock, &quot;bcache&quot;);
+</span><span style="color:#e06c75;">-
+</span><span>   // Create linked list of buffers
+</span><span style="color:#e06c75;">-  bcache.head.prev = &amp;bcache.head;
+</span><span style="color:#e06c75;">-  bcache.head.next = &amp;bcache.head;
+</span><span style="color:#e06c75;">-  for(b = bcache.buf; b &lt; bcache.buf+NBUF; b++){
+</span><span style="color:#e06c75;">-    b-&gt;next = bcache.head.next;
+</span><span style="color:#e06c75;">-    b-&gt;prev = &amp;bcache.head;
+</span><span style="color:#e06c75;">-    initsleeplock(&amp;b-&gt;lock, &quot;buffer&quot;);
+</span><span style="color:#e06c75;">-    bcache.head.next-&gt;prev = b;
+</span><span style="color:#e06c75;">-    bcache.head.next = b;
+</span><span style="color:#98c379;">+  for (int i = 0; i &lt; NBUCKET; i++) {
+</span><span style="color:#98c379;">+    initlock(&amp;bcache.head_lock[i], head_lock_name[i]);
+</span><span style="color:#98c379;">+    bcache.head[i].prev = &amp;bcache.head[i];
+</span><span style="color:#98c379;">+    bcache.head[i].next = &amp;bcache.head[i];
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+  for (int i = 0; i &lt; NBUF; i++) {
+</span><span style="color:#98c379;">+    uint hash_idx = i % NBUCKET;
+</span><span style="color:#98c379;">+    b = &amp;bcache.buf[i];
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+    b-&gt;next = bcache.head[hash_idx].next;
+</span><span style="color:#98c379;">+    b-&gt;prev = &amp;bcache.head[hash_idx];
+</span><span style="color:#98c379;">+    b-&gt;last_use = ticks;
+</span><span style="color:#98c379;">+    initsleeplock(&amp;bcache.buf[i].lock, &quot;buffer&quot;);
+</span><span style="color:#98c379;">+    bcache.head[hash_idx].next-&gt;prev = b;
+</span><span style="color:#98c379;">+    bcache.head[hash_idx].next = b;
+</span><span>   }
+</span><span> }
+</span><span> 
+</span><span>@@ -59,32 +84,67 @@ </span><span style="color:#61afef;">static struct buf*
+</span><span> bget(uint dev, uint blockno)
+</span><span> {
+</span><span>   struct buf *b;
+</span><span style="color:#98c379;">+  uint min_last_use;
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  uint hash_idx = blockno % NBUCKET;
+</span><span> 
+</span><span style="color:#e06c75;">-  acquire(&amp;bcache.lock);
+</span><span style="color:#98c379;">+  acquire(&amp;bcache.head_lock[hash_idx]);
+</span><span> 
+</span><span>   // Is the block already cached?
+</span><span style="color:#e06c75;">-  for(b = bcache.head.next; b != &amp;bcache.head; b = b-&gt;next){
+</span><span style="color:#98c379;">+  for(b = bcache.head[hash_idx].next; b != &amp;bcache.head[hash_idx]; b = b-&gt;next){
+</span><span>     if(b-&gt;dev == dev &amp;&amp; b-&gt;blockno == blockno){
+</span><span>       b-&gt;refcnt++;
+</span><span style="color:#e06c75;">-      release(&amp;bcache.lock);
+</span><span style="color:#98c379;">+      b-&gt;last_use = ticks;
+</span><span style="color:#98c379;">+      release(&amp;bcache.head_lock[hash_idx]);
+</span><span>       acquiresleep(&amp;b-&gt;lock);
+</span><span>       return b;
+</span><span>     }
+</span><span>   }
+</span><span> 
+</span><span>   // Not cached.
+</span><span style="color:#e06c75;">-  // Recycle the least recently used (LRU) unused buffer.
+</span><span style="color:#e06c75;">-  for(b = bcache.head.prev; b != &amp;bcache.head; b = b-&gt;prev){
+</span><span style="color:#e06c75;">-    if(b-&gt;refcnt == 0) {
+</span><span style="color:#98c379;">+  // Recycle the least recently used unused buffer.
+</span><span style="color:#98c379;">+  min_last_use = __UINT32_MAX__;
+</span><span style="color:#98c379;">+  b = 0;
+</span><span style="color:#98c379;">+  for (int i = 0; i &lt; NBUF; i++) {
+</span><span style="color:#98c379;">+    if (bcache.buf[i].refcnt == 0 &amp;&amp; min_last_use &gt; bcache.buf[i].last_use) {
+</span><span style="color:#98c379;">+      min_last_use = bcache.buf[i].last_use;
+</span><span style="color:#98c379;">+      b = &amp;bcache.buf[i];
+</span><span style="color:#98c379;">+    }
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  if (b != 0) {
+</span><span style="color:#98c379;">+    // Find an available buffer
+</span><span style="color:#98c379;">+    uint no = b-&gt;blockno;
+</span><span style="color:#98c379;">+    if (no % NBUCKET == hash_idx) {
+</span><span>       b-&gt;dev = dev;
+</span><span>       b-&gt;blockno = blockno;
+</span><span>       b-&gt;valid = 0;
+</span><span>       b-&gt;refcnt = 1;
+</span><span style="color:#e06c75;">-      release(&amp;bcache.lock);
+</span><span style="color:#98c379;">+      b-&gt;last_use = ticks;
+</span><span style="color:#98c379;">+      release(&amp;bcache.head_lock[hash_idx]);
+</span><span>       acquiresleep(&amp;b-&gt;lock);
+</span><span>       return b;
+</span><span>     }
+</span><span style="color:#98c379;">+    acquire(&amp;bcache.head_lock[no % NBUCKET]);
+</span><span style="color:#98c379;">+    b-&gt;dev = dev;
+</span><span style="color:#98c379;">+    b-&gt;blockno = blockno;
+</span><span style="color:#98c379;">+    b-&gt;valid = 0;
+</span><span style="color:#98c379;">+    b-&gt;refcnt = 1;
+</span><span style="color:#98c379;">+    b-&gt;last_use = ticks;
+</span><span style="color:#98c379;">+    // Steal!
+</span><span style="color:#98c379;">+    b-&gt;next-&gt;prev = b-&gt;prev;
+</span><span style="color:#98c379;">+    b-&gt;prev-&gt;next = b-&gt;next;
+</span><span style="color:#98c379;">+    release(&amp;bcache.head_lock[no % NBUCKET]);
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+    b-&gt;next = bcache.head[hash_idx].next;
+</span><span style="color:#98c379;">+    b-&gt;prev = &amp;bcache.head[hash_idx];
+</span><span style="color:#98c379;">+    bcache.head[hash_idx].next-&gt;prev = b;
+</span><span style="color:#98c379;">+    bcache.head[hash_idx].next = b;
+</span><span style="color:#98c379;">+    release(&amp;bcache.head_lock[hash_idx]);
+</span><span style="color:#98c379;">+    acquiresleep(&amp;b-&gt;lock);
+</span><span style="color:#98c379;">+    return b;
+</span><span>   }
+</span><span style="color:#98c379;">+
+</span><span>   panic(&quot;bget: no buffers&quot;);
+</span><span> }
+</span><span> 
+</span><span>@@ -121,33 +181,29 @@ </span><span style="color:#61afef;">brelse(struct buf *b)
+</span><span> 
+</span><span>   releasesleep(&amp;b-&gt;lock);
+</span><span> 
+</span><span style="color:#e06c75;">-  acquire(&amp;bcache.lock);
+</span><span style="color:#98c379;">+  uint hash_idx = b-&gt;blockno % NBUCKET;
+</span><span style="color:#98c379;">+  acquire(&amp;bcache.head_lock[hash_idx]);
+</span><span>   b-&gt;refcnt--;
+</span><span>   if (b-&gt;refcnt == 0) {
+</span><span style="color:#e06c75;">-    // no one is waiting for it.
+</span><span style="color:#e06c75;">-    b-&gt;next-&gt;prev = b-&gt;prev;
+</span><span style="color:#e06c75;">-    b-&gt;prev-&gt;next = b-&gt;next;
+</span><span style="color:#e06c75;">-    b-&gt;next = bcache.head.next;
+</span><span style="color:#e06c75;">-    b-&gt;prev = &amp;bcache.head;
+</span><span style="color:#e06c75;">-    bcache.head.next-&gt;prev = b;
+</span><span style="color:#e06c75;">-    bcache.head.next = b;
+</span><span style="color:#98c379;">+    b-&gt;last_use = ticks;
+</span><span>   }
+</span><span style="color:#e06c75;">-  
+</span><span style="color:#e06c75;">-  release(&amp;bcache.lock);
+</span><span style="color:#98c379;">+  release(&amp;bcache.head_lock[hash_idx]);
+</span><span> }
+</span><span> 
+</span><span> void
+</span><span> bpin(struct buf *b) {
+</span><span style="color:#e06c75;">-  acquire(&amp;bcache.lock);
+</span><span style="color:#98c379;">+  uint hash_idx = b-&gt;blockno % NBUCKET;
+</span><span style="color:#98c379;">+  acquire(&amp;bcache.head_lock[hash_idx]);
+</span><span>   b-&gt;refcnt++;
+</span><span style="color:#e06c75;">-  release(&amp;bcache.lock);
+</span><span style="color:#98c379;">+  release(&amp;bcache.head_lock[hash_idx]);
+</span><span> }
+</span><span> 
+</span><span> void
+</span><span> bunpin(struct buf *b) {
+</span><span style="color:#e06c75;">-  acquire(&amp;bcache.lock);
+</span><span style="color:#98c379;">+  uint hash_idx = b-&gt;blockno % NBUCKET;
+</span><span style="color:#98c379;">+  acquire(&amp;bcache.head_lock[hash_idx]);
+</span><span>   b-&gt;refcnt--;
+</span><span style="color:#e06c75;">-  release(&amp;bcache.lock);
+</span><span style="color:#98c379;">+  release(&amp;bcache.head_lock[hash_idx]);
+</span><span> }
+</span><span> 
+</span><span> 
+</span><span>diff --git a/kernel/buf.h b/kernel/buf.h
+</span><span>index 4616e9e..635ec1e 100644
+</span><span>--- a/kernel/buf.h
+</span><span>+++ b/kernel/buf.h
+</span><span>@@ -5,6 +5,7 @@ </span><span style="color:#61afef;">struct buf {
+</span><span>   uint blockno;
+</span><span>   struct sleeplock lock;
+</span><span>   uint refcnt;
+</span><span style="color:#98c379;">+  uint last_use;
+</span><span>   struct buf *prev; // LRU cache list
+</span><span>   struct buf *next;
+</span><span>   uchar data[BSIZE];
+</span></code></pre>
+<h2 id="qi-ta">其他</h2>
+<p>这次的实验在最后 <code>make grade</code> 的时候又出了问题：<code>kalloctest</code> 超时，然后 <code>usertests</code> 中的 <code>textwrite</code> 一直过不了。前面这个问题我一开始是在 <code>kalloc</code> 中一次只偷 1 页的内容，后来改成了一次偷 64 页，然后还是超时了，在网上搜了搜其他人的实现<sup class="footnote-reference"><a href="#1">1</a></sup>，原封不动抄过来，还是超时 😩。</p>
+<p><code>textwrites</code> 的那个测试一直过不了，下面是这个测试的部分内容：</p>
+<pre data-lang="c" style="background-color:#282c34;color:#dcdfe4;" class="language-c "><code class="language-c" data-lang="c"><span>  </span><span style="color:#c678dd;">...
+</span><span>  pid </span><span style="color:#c678dd;">= </span><span style="color:#e06c75;">fork</span><span>();
+</span><span>  </span><span style="color:#c678dd;">if</span><span>(pid </span><span style="color:#c678dd;">== </span><span style="color:#e5c07b;">0</span><span>) {
+</span><span>    </span><span style="color:#c678dd;">volatile int *</span><span>addr </span><span style="color:#c678dd;">= </span><span>(</span><span style="color:#c678dd;">int *</span><span>) </span><span style="color:#e5c07b;">0</span><span>;
+</span><span>    </span><span style="color:#c678dd;">*</span><span>addr </span><span style="color:#c678dd;">= </span><span style="color:#e5c07b;">10</span><span>;
+</span><span>    </span><span style="color:#61afef;">exit</span><span>(</span><span style="color:#e5c07b;">1</span><span>);
+</span><span>  } </span><span style="color:#c678dd;">else if</span><span>(pid </span><span style="color:#c678dd;">&lt; </span><span style="color:#e5c07b;">0</span><span>){
+</span><span>  </span><span style="color:#c678dd;">...
+</span></code></pre>
+<p>这段测试用于验证操作系统内核是否正确实现了对程序试图向只读（通常是文本段，存放代码）内存区域写入数据的行为的保护。这种保护通常通过引发一个段错误（segmentation fault）来实现，这是大多数现代操作系统为了防止程序破坏自身或其他程序的一种安全机制。可是我没有通过。就很烦，转到其他分支进行测试，居然都没通过 😂（在做 <a href="/posts/mit-6-s081-0x05">COW</a> 的时候就发现了），暂时还没想好咋该 <del>太菜了呜呜呜</del>，之后再看吧。</p>
+<hr />
+<div class="footnote-definition" id="1"><sup class="footnote-definition-label">1</sup>
+<p><a href="https://blog.miigon.net/posts/s081-lab8-locks/">https://blog.miigon.net/posts/s081-lab8-locks/</a></p>
+</div>
+
+        </section>
+
+        
+            <div class="post-tags">
+                <nav class="nav tags">
+                    <ul class="tags">
+                        
+                            <li><a href=https://miaohn.github.io/tags/labs/>labs</a></li>
+                        
+                    </ul>
+                </nav>
+            </div>
+        
+
+    </article>
+
+    
+</main>
+
+
+
+        <footer>
+  <div class="footer-info">
+    2024 © MiaoHN
+  </div>
+</footer>
+    </div>
+</body>
+
+</html>

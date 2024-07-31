@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+
+    
+        <title>
+             MIT 6.S081 | 0x04 Traps
+            
+        </title>
+
+        
+            <meta property="og:title" content="MIT 6.S081 | 0x04 Traps" />
+        
+    
+
+    
+        
+    
+
+    
+        
+    
+
+    
+         <link rel="icon" type="image/png" href=&#x2F;icon&#x2F;favicon.png />
+    
+
+    
+
+    
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-6YGDB8SLBT"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', 'G-6YGDB8SLBT');
+        </script>
+    
+
+    
+    
+
+
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@1,500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Sans&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto+Mono" rel="stylesheet">
+
+    <link rel="stylesheet" type="text/css" media="screen" href=https://miaohn.github.io/main.css />
+
+    
+        <link
+            rel="stylesheet"
+            id="darkModeStyle"
+            type="text/css"
+            href=https://miaohn.github.io/dark.css
+            
+            
+        />
+    
+
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            renderMathInElement(document.body, {
+            // customised options
+            // • auto-render specific keys, e.g.:
+            delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false},
+                {left: '\\(', right: '\\)', display: false},
+                {left: '\\[', right: '\\]', display: true}
+            ],
+            // • rendering keys, e.g.:
+            throwOnError : false
+            });
+        });
+    </script>
+    
+
+         
+		<link href="https://unpkg.com/highlightjs-badge/highlightjs/styles/railscasts.css" rel="stylesheet">
+		<!-- https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.1.1/build/styles/  for min version -->
+		<script src="https://unpkg.com/highlightjs-badge/highlightjs/highlight.pack.js"></script>
+		<script src="https://unpkg.com/highlightjs-badge/highlightjs-badge.min.js"></script>
+		<script>
+			var pres = document.querySelectorAll("pre>code");
+			for (var i = 0; i < pres.length; i++) {
+				hljs.highlightBlock(pres[i]);
+			}
+		</script>
+		
+			<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js"></script>
+			<script>
+				var options = {
+					copyIconClass: "gg-clipboard",
+					checkIconClass: "gg-check"
+				};
+				window.highlightJsBadge(options);
+			</script>
+		
+
+	
+
+
+    
+
+
+</head>
+
+
+<body>
+    <div class="content">
+        <header>
+    <div class="main" id="main_title">
+        <a href=https:&#x2F;&#x2F;miaohn.github.io>MiaoHN&#x27;s Blog</a>
+    </div>
+
+    <nav>
+        
+            <a href=&#x2F;posts>Posts</a>
+        
+            <a href=&#x2F;tags>Tags</a>
+        
+            <a href=&#x2F;about>About</a>
+        
+
+        
+
+        
+    </nav>
+</header>
+
+
+        
+    
+<main>
+    <article>
+        <div class="title">
+            <h1 class="title">MIT 6.S081 | 0x04 Traps</h1>
+            <div class="meta">
+                 2023-12-30
+
+                
+            </div>
+        </div>
+
+        
+
+        <section class="body">
+            <ul>
+<li>链接：<a href="https://pdos.csail.mit.edu/6.S081/2021/labs/traps.html">https://pdos.csail.mit.edu/6.S081/2021/labs/traps.html</a></li>
+<li>难度： 🟩🟦🟥</li>
+</ul>
+<div class="callout callout-tip">
+  <p>Before you start coding, read Chapter 4 of the <a href="https://pdos.csail.mit.edu/6.S081/2020/xv6/book-riscv-rev1.pdf">xv6 book</a>, and related source files:</p>
+<ul>
+<li><code>kernel/trampoline.S</code>: the assembly involved in changing from user space to kernel space and back</li>
+<li><code>kernel/trap.c</code>: code handling all interrupts</li>
+</ul>
+
+</div><h2 id="risc-v-assembly">🟩 RISC-V assembly</h2>
+<p>这道题让我们通过阅读一个文件 <code>user/call.c</code> 的 <code>asm</code> 代码来学习 RISC-V 汇编的一些基础知识</p>
+<pre data-lang="c" style="background-color:#282c34;color:#dcdfe4;" class="language-c "><code class="language-c" data-lang="c"><span style="color:#c678dd;">#include </span><span style="color:#98c379;">&quot;kernel/param.h&quot;
+</span><span style="color:#c678dd;">#include </span><span style="color:#98c379;">&quot;kernel/types.h&quot;
+</span><span style="color:#c678dd;">#include </span><span style="color:#98c379;">&quot;kernel/stat.h&quot;
+</span><span style="color:#c678dd;">#include </span><span style="color:#98c379;">&quot;user/user.h&quot;
+</span><span>
+</span><span style="color:#c678dd;">int </span><span style="color:#61afef;">g</span><span>(</span><span style="color:#c678dd;">int </span><span style="color:#e06c75;">x</span><span>) {
+</span><span>  </span><span style="color:#c678dd;">return</span><span> x</span><span style="color:#c678dd;">+</span><span style="color:#e5c07b;">3</span><span>;
+</span><span>}
+</span><span>
+</span><span style="color:#c678dd;">int </span><span style="color:#61afef;">f</span><span>(</span><span style="color:#c678dd;">int </span><span style="color:#e06c75;">x</span><span>) {
+</span><span>  </span><span style="color:#c678dd;">return </span><span style="color:#e06c75;">g</span><span>(x);
+</span><span>}
+</span><span>
+</span><span style="color:#c678dd;">void </span><span style="color:#61afef;">main</span><span>(</span><span style="color:#c678dd;">void</span><span>) {
+</span><span>  </span><span style="color:#61afef;">printf</span><span>(</span><span style="color:#98c379;">&quot;</span><span style="color:#e5c07b;">%d %d</span><span style="color:#56b6c2;">\n</span><span style="color:#98c379;">&quot;</span><span>, </span><span style="color:#e06c75;">f</span><span>(</span><span style="color:#e5c07b;">8</span><span>)</span><span style="color:#c678dd;">+</span><span style="color:#e5c07b;">1</span><span>, </span><span style="color:#e5c07b;">13</span><span>);
+</span><span>  </span><span style="color:#61afef;">exit</span><span>(</span><span style="color:#e5c07b;">0</span><span>);
+</span><span>}
+</span></code></pre>
+<p>这个文件很简单，<code>main</code> 使用 <code>printf</code> 打印两个数字，并在其中通过 <code>f</code> 调用 <code>g</code>。下面就来看看实验提了哪些问题吧</p>
+<blockquote>
+<p>Which registers contain arguments to functions? For example, which register holds 13 in main's call to <code>printf</code>?</p>
+</blockquote>
+<p>直接看代码：</p>
+<pre style="background-color:#282c34;color:#dcdfe4;"><code><span>000000000000001c &lt;main&gt;:
+</span><span>
+</span><span>void main(void) {
+</span><span>  1c: 1141                 addi sp,sp,-16
+</span><span>  1e: e406                 sd ra,8(sp)
+</span><span>  20: e022                 sd s0,0(sp)
+</span><span>  22: 0800                 addi s0,sp,16
+</span><span>  printf(&quot;%d %d\n&quot;, f(8)+1, 13);
+</span><span>  24: 4635                 li a2,13
+</span><span>  26: 45b1                 li a1,12
+</span><span>  28: 00000517             auipc a0,0x0
+</span><span>  2c: 7b850513             addi a0,a0,1976 # 7e0 &lt;malloc+0xe6&gt;
+</span><span>  30: 00000097             auipc ra,0x0
+</span><span>  34: 612080e7             jalr 1554(ra) # 642 &lt;printf&gt;
+</span><span>  exit(0);
+</span><span>  38: 4501                 li a0,0
+</span><span>  3a: 00000097             auipc ra,0x0
+</span><span>  3e: 28e080e7             jalr 654(ra) # 2c8 &lt;exit&gt;
+</span></code></pre>
+<p>在 24 和 26 这两行分别向 <code>a2</code> 和 <code>a1</code> 两个寄存器存了 13、12 这两个值。所以可以回答这个问题，函数的寄存器存在 <code>a1</code>~<code>a7</code> 这些寄存器中（查查 RISC-V 寄存器也能知道）</p>
+<blockquote>
+<p>Where is the call to function <code>f</code> in the assembly code for <code>main</code>? Where is the call to <code>g</code>? (Hint: the compiler may inline functions.)</p>
+</blockquote>
+<p>还是上面那段代码，<code>a1</code> 和 <code>a2</code> 存了两个立即数，这个 12 其实就是 <code>f(8)+1</code> 的结果。所以说编译器在编译的过程中直接将 <code>f</code> 和 <code>g</code> 的调用进行内联，直接用它们的结果进行编译了</p>
+<blockquote>
+<p>At what address is the function <code>printf</code> located?</p>
+</blockquote>
+<pre style="background-color:#282c34;color:#dcdfe4;"><code><span>0000000000000642 &lt;printf&gt;:
+</span></code></pre>
+<p>所以 <code>printf</code> 这个函数的地址位于 0x642。这个问题一出来，就会很自然地想到下面的问题：</p>
+<blockquote>
+<p>What value is in the register <code>ra</code> just after the <code>jalr</code> to <code>printf</code> in <code>main</code>?</p>
+</blockquote>
+<p>在 <code>main</code> 中有一句 <code>jalr 1554(ra)</code>，这应该是在 <code>ra</code> 的基础上加 1554，而且这是一个十进制立即数，那么 0x642 减去这个立即数得到的结果是 48，转换为十六进制就是 0x30，这正好是 <code>jalr</code> 跳转的上一句地址</p>
+<div class="callout callout-tip">
+  <p>我还查了一下 <code>auipc ra, 0x0</code> 的含义：</p>
+<p>这是一个 RISC-V 指令，用于将一个 20 位的立即数（偏移量）加到当前指令的地址的高 20 位上，结果存储在目标寄存器 <code>ra</code> 中</p>
+<p>具体来说，<code>auipc</code> 指令将当前指令的地址的高 20 位（即 <code>PC[31:12]</code>）与一个 20 位的立即数相加，得到一个 32 位的地址，然后将这个地址存储在目标寄存器 <code>ra</code> 中。这个指令通常用于计算全局地址，例如用于加载全局变量的地址</p>
+<p><strong>例如，如果当前指令的地址是 0x1000，那么执行 <code>auipc ra, 0x0</code> 指令后，目标寄存器 <code>ra</code> 将被设置为 0x1000</strong></p>
+
+</div>
+<blockquote>
+<p>Run the following code.</p>
+<pre data-lang="c" style="background-color:#282c34;color:#dcdfe4;" class="language-c "><code class="language-c" data-lang="c"><span style="color:#c678dd;">unsigned int</span><span> i </span><span style="color:#c678dd;">= </span><span style="color:#e5c07b;">0x00646c72</span><span>;
+</span><span style="color:#e06c75;">printf</span><span>(</span><span style="color:#98c379;">&quot;H</span><span style="color:#e5c07b;">%x</span><span style="color:#98c379;"> Wo</span><span style="color:#e5c07b;">%s</span><span style="color:#98c379;">&quot;</span><span>, </span><span style="color:#e5c07b;">57616</span><span>, </span><span style="color:#c678dd;">&amp;</span><span>i);
+</span></code></pre>
+<p>What is the output?</p>
+<p>The output depends on that fact that the RISC-V is little-endian. If the RISC-V were instead big-endian what would you set i to in order to yield the same output? Would you need to change 57616 to a different value?</p>
+</blockquote>
+<p>这个问题考察我们对大端小端的理解，下面先来进行一个分析。首先是 <code>&quot;H%x&quot;</code>，这个 <code>%x</code> 打印的是 57616 的 16 进制值，跟大小端没关系，所以打印的第一个值必定是 <code>HE110</code>。然后是这个 <code>&quot;Wo%s&quot;</code>，将一个无符号整数转换为字符串，因为 RISC-V 是小端存储，所以低地址在前，高地址在后，所以打印的字符应该分别为 <code>72</code>、<code>6c</code>、<code>64</code> 以及 <code>00</code>（字符串结束），ASCII 转码后打印得到的是 <code>rld</code>。现在可以对这个问题进行一个解答：</p>
+<ol>
+<li>因为 RISC-V 是小端存储，所以全部的输出为：<code>HE110 World</code></li>
+<li>如果是大端存储，因为 <code>57616</code> 直接打印值，所以不需要改变；而 <code>i</code> 需要改变，应改为 <code>0x726c6400</code></li>
+</ol>
+<blockquote>
+<p>In the following code, what is going to be printed after <code>y=</code>? (note: the answer is not a specific value.) Why does this happen?</p>
+<pre data-lang="c" style="background-color:#282c34;color:#dcdfe4;" class="language-c "><code class="language-c" data-lang="c"><span style="color:#e06c75;">printf</span><span>(</span><span style="color:#98c379;">&quot;x=</span><span style="color:#e5c07b;">%d</span><span style="color:#98c379;"> y=</span><span style="color:#e5c07b;">%d</span><span style="color:#98c379;">&quot;</span><span>, </span><span style="color:#e5c07b;">3</span><span>);
+</span></code></pre>
+</blockquote>
+<p><code>y=</code> 后的数字不确定，其数值取决于调用 <code>printf</code> 时第二个寄存器 <code>a2</code> 上的值。发生这种情况的原因是 <code>printf</code> 内有两个变量需要输出，但在后面的列表中只给了一个值，第二个值未给定，导致了输出结果的不确定</p>
+<h2 id="backtrace">🟦 Backtrace</h2>
+<blockquote>
+<p>Implement a <code>backtrace()</code> function in <code>kernel/printf.c</code>. Insert a call to this function in <code>sys_sleep</code>, and then run <code>bttest</code>, which calls <code>sys_sleep</code>. Your output should be as follows:</p>
+<pre data-lang="bash" style="background-color:#282c34;color:#dcdfe4;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#e06c75;">backtrace:
+</span><span style="color:#e06c75;">0x0000000080002cda
+</span><span style="color:#e06c75;">0x0000000080002bb6
+</span><span style="color:#e06c75;">0x0000000080002898
+</span></code></pre>
+<p>After <code>bttest</code> exit qemu. In your terminal: the addresses may be slightly different but if you run <code>addr2line -e kernel/kernel</code> (or <code>riscv64-unknown-elf-addr2line -e kernel/kernel</code>) and cut-and-paste the above addresses as follows:</p>
+<pre data-lang="bash" style="background-color:#282c34;color:#dcdfe4;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#e06c75;">$</span><span> addr2line</span><span style="color:#e06c75;"> -e</span><span> kernel/kernel
+</span><span style="color:#e06c75;">0x0000000080002de2
+</span><span style="color:#e06c75;">0x0000000080002f4a
+</span><span style="color:#e06c75;">0x0000000080002bfc
+</span><span style="color:#e06c75;">Ctrl-D
+</span></code></pre>
+<p>You should see something like this:</p>
+<pre data-lang="txt" style="background-color:#282c34;color:#dcdfe4;" class="language-txt "><code class="language-txt" data-lang="txt"><span>kernel/sysproc.c:74
+</span><span>kernel/syscall.c:224
+</span><span>kernel/trap.c:85
+</span></code></pre>
+</blockquote>
+<h3 id="fen-xi">分析</h3>
+<p>实现一个 <code>backtrace()</code> 方便调试。GCC 编译器将当前调用函数的 frame pointer 存到寄存器 <code>s0</code> 中，下图是函数栈的结构，返回地址存到 <code>fp - 8</code> 的位置，<code>fp - 16</code> 是上一个 <code>fp</code> 指针的位置</p>
+<p><img src="https://cdn.jsdelivr.net/gh/MiaoHN/image-host@master/images/20240608103905.png" alt="frame pointer" /></p>
+<h3 id="dai-ma">代码</h3>
+<pre data-lang="diff" style="background-color:#282c34;color:#dcdfe4;" class="language-diff "><code class="language-diff" data-lang="diff"><span>diff --git a/kernel/defs.h b/kernel/defs.h
+</span><span>index a3c962b..4b82fc2 100644
+</span><span>--- a/kernel/defs.h
+</span><span>+++ b/kernel/defs.h
+</span><span>@@ -80,6 +80,7 @@ </span><span style="color:#61afef;">int             pipewrite(struct pipe*, uint64, int);
+</span><span> void            printf(char*, ...);
+</span><span> void            panic(char*) __attribute__((noreturn));
+</span><span> void            printfinit(void);
+</span><span style="color:#98c379;">+void            backtrace(void);
+</span><span> 
+</span><span> // proc.c
+</span><span> int             cpuid(void);
+</span><span>diff --git a/kernel/printf.c b/kernel/printf.c
+</span><span>index 1a50203..1fffaa4 100644
+</span><span>--- a/kernel/printf.c
+</span><span>+++ b/kernel/printf.c
+</span><span>@@ -133,3 +133,19 @@ </span><span style="color:#61afef;">printfinit(void)
+</span><span>   initlock(&amp;pr.lock, &quot;pr&quot;);
+</span><span>   pr.locking = 1;
+</span><span> }
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+void
+</span><span style="color:#98c379;">+backtrace(void)
+</span><span style="color:#98c379;">+{
+</span><span style="color:#98c379;">+  uint64 fp, up, ra;
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  fp = r_fp();
+</span><span style="color:#98c379;">+  up = PGROUNDUP(fp);
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  printf(&quot;backtrace:\n&quot;);
+</span><span style="color:#98c379;">+  while (fp != up) {
+</span><span style="color:#98c379;">+    ra = *(uint64*)(fp - 8);
+</span><span style="color:#98c379;">+    printf(&quot;%p\n&quot;, ra);
+</span><span style="color:#98c379;">+    fp = *(uint64*)(fp - 16);
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+}
+</span><span>diff --git a/kernel/riscv.h b/kernel/riscv.h
+</span><span>index 20a01db..85a08cc 100644
+</span><span>--- a/kernel/riscv.h
+</span><span>+++ b/kernel/riscv.h
+</span><span>@@ -319,6 +319,14 @@ </span><span style="color:#61afef;">r_ra()
+</span><span>   return x;
+</span><span> }
+</span><span> 
+</span><span style="color:#98c379;">+static inline uint64
+</span><span style="color:#98c379;">+r_fp()
+</span><span style="color:#98c379;">+{
+</span><span style="color:#98c379;">+  uint64 x;
+</span><span style="color:#98c379;">+  asm volatile(&quot;mv %0, s0&quot; : &quot;=r&quot; (x) );
+</span><span style="color:#98c379;">+  return x;
+</span><span style="color:#98c379;">+}
+</span><span style="color:#98c379;">+
+</span><span> // flush the TLB.
+</span><span> static inline void
+</span><span> sfence_vma()
+</span><span>diff --git a/kernel/sysproc.c b/kernel/sysproc.c
+</span><span>index 3b4d5bd..4ef466f 100644
+</span><span>--- a/kernel/sysproc.c
+</span><span>+++ b/kernel/sysproc.c
+</span><span>@@ -51,6 +51,7 @@ </span><span style="color:#61afef;">sys_sbrk(void)
+</span><span> uint64
+</span><span> sys_sleep(void)
+</span><span> {
+</span><span style="color:#98c379;">+  backtrace();
+</span><span>   int n;
+</span><span>   uint ticks0;
+</span></code></pre>
+<h2 id="alarm">🟥 Alarm</h2>
+<blockquote>
+<p>In this exercise you'll add a feature to xv6 that periodically alerts a process as it uses CPU time. This might be useful for compute-bound processes that want to limit how much CPU time they chew up, or for processes that want to compute but also want to take some periodic action. More generally, you'll be implementing a primitive form of user-level interrupt/fault handlers; you could use something similar to handle page faults in the application, for example. Your solution is correct if it passes alarmtest and usertests.</p>
+</blockquote>
+<h3 id="fen-xi-1">分析</h3>
+<p>这个任务要我们实现 <code>sigalarm</code> 和 <code>sigreturn</code>。前者每隔若干个 <code>ticks</code> 执行一个 <code>handler</code> 函数，后者结束这个 <code>sigalarm</code> 分配的任务。在 RISC-V 中，用户空间中的 <code>pc</code> 存在 <code>p-&gt;trapframe-&gt;epc</code> 中，我们在发生时钟中断时更新 <code>alarm_tick_count</code>，如果达到相应的 ticks 数则执行 <code>alarm_handler</code>（即 <code>p-&gt;trapframe-&gt;epc = p-&gt;alarm_handler</code>）</p>
+<p>大体的思路不是很复杂，有一些细节需要注意：</p>
+<ol>
+<li>在执行 <code>handler</code> 函数之前要保持一些必要的寄存器，我这里是直接将 <code>trapframe</code> 进行复制。在 <code>sigreturn</code> 的时候还需要将这些寄存器的值进行复原</li>
+<li>为了防止重复对 <code>handler</code> 进行赋值并调用，我在 <code>proc</code> 中设置了一个开关变量 <code>alarm_running</code>，在执行 <code>handler</code> 后无法再次对 <code>handler</code> 复制，直到调用 <code>sigreturn</code></li>
+</ol>
+<h3 id="dai-ma-1">代码</h3>
+<pre data-lang="diff" style="background-color:#282c34;color:#dcdfe4;" class="language-diff "><code class="language-diff" data-lang="diff"><span>diff --git a/Makefile b/Makefile
+</span><span>index ded5bc2..d89ddfe 100644
+</span><span>--- a/Makefile
+</span><span>+++ b/Makefile
+</span><span>@@ -199,6 +199,7 @@ </span><span style="color:#61afef;">endif
+</span><span> 
+</span><span> ifeq ($(LAB),traps)
+</span><span> UPROGS += \
+</span><span style="color:#98c379;">+ $U/_alarmtest\
+</span><span>  $U/_call\
+</span><span>  $U/_bttest
+</span><span> endif
+</span><span>diff --git a/kernel/proc.c b/kernel/proc.c
+</span><span>index 959b778..5586691 100644
+</span><span>--- a/kernel/proc.c
+</span><span>+++ b/kernel/proc.c
+</span><span>@@ -132,6 +132,12 @@ </span><span style="color:#61afef;">found:
+</span><span>     return 0;
+</span><span>   }
+</span><span> 
+</span><span style="color:#98c379;">+  if((p-&gt;alarm_trapframe = (struct trapframe *)kalloc()) == 0){
+</span><span style="color:#98c379;">+    freeproc(p);
+</span><span style="color:#98c379;">+    release(&amp;p-&gt;lock);
+</span><span style="color:#98c379;">+    return 0;
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+
+</span><span>   // An empty user page table.
+</span><span>   p-&gt;pagetable = proc_pagetable(p);
+</span><span>   if(p-&gt;pagetable == 0){
+</span><span>@@ -146,6 +152,11 @@ </span><span style="color:#61afef;">found:
+</span><span>   p-&gt;context.ra = (uint64)forkret;
+</span><span>   p-&gt;context.sp = p-&gt;kstack + PGSIZE;
+</span><span> 
+</span><span style="color:#98c379;">+  p-&gt;alarm_handler = 0;
+</span><span style="color:#98c379;">+  p-&gt;alarm_intervals = 0;
+</span><span style="color:#98c379;">+  p-&gt;alarm_tick_count = 0;
+</span><span style="color:#98c379;">+  p-&gt;alarm_running = 0;
+</span><span style="color:#98c379;">+
+</span><span>   return p;
+</span><span> }
+</span><span> 
+</span><span>@@ -157,6 +168,8 @@ </span><span style="color:#61afef;">freeproc(struct proc *p)
+</span><span> {
+</span><span>   if(p-&gt;trapframe)
+</span><span>     kfree((void*)p-&gt;trapframe);
+</span><span style="color:#98c379;">+  if(p-&gt;alarm_trapframe)
+</span><span style="color:#98c379;">+    kfree((void*)p-&gt;alarm_trapframe);
+</span><span>   p-&gt;trapframe = 0;
+</span><span>   if(p-&gt;pagetable)
+</span><span>     proc_freepagetable(p-&gt;pagetable, p-&gt;sz);
+</span><span>diff --git a/kernel/proc.h b/kernel/proc.h
+</span><span>index d021857..77339dc 100644
+</span><span>--- a/kernel/proc.h
+</span><span>+++ b/kernel/proc.h
+</span><span>@@ -104,4 +104,10 @@ </span><span style="color:#61afef;">struct proc {
+</span><span>   struct file *ofile[NOFILE];  // Open files
+</span><span>   struct inode *cwd;           // Current directory
+</span><span>   char name[16];               // Process name (debugging)
+</span><span style="color:#98c379;">+  
+</span><span style="color:#98c379;">+  void (*alarm_handler)();
+</span><span style="color:#98c379;">+  struct trapframe *alarm_trapframe;
+</span><span style="color:#98c379;">+  int alarm_tick_count;
+</span><span style="color:#98c379;">+  int alarm_intervals;
+</span><span style="color:#98c379;">+  int alarm_running;
+</span><span> };
+</span><span>diff --git a/kernel/syscall.c b/kernel/syscall.c
+</span><span>index ed65409..cf8a2fc 100644
+</span><span>--- a/kernel/syscall.c
+</span><span>+++ b/kernel/syscall.c
+</span><span>@@ -101,6 +101,8 @@ </span><span style="color:#61afef;">extern uint64 sys_unlink(void);
+</span><span> extern uint64 sys_link(void);
+</span><span> extern uint64 sys_mkdir(void);
+</span><span> extern uint64 sys_close(void);
+</span><span style="color:#98c379;">+extern uint64 sys_sigalarm(void);
+</span><span style="color:#98c379;">+extern uint64 sys_sigreturn(void);
+</span><span> 
+</span><span> // An array mapping syscall numbers from syscall.h
+</span><span> // to the function that handles the system call.
+</span><span>@@ -126,6 +128,8 @@ </span><span style="color:#61afef;">static uint64 (*syscalls[])(void) = {
+</span><span> [SYS_link]    sys_link,
+</span><span> [SYS_mkdir]   sys_mkdir,
+</span><span> [SYS_close]   sys_close,
+</span><span style="color:#98c379;">+[SYS_sigalarm]  sys_sigalarm,
+</span><span style="color:#98c379;">+[SYS_sigreturn] sys_sigreturn,
+</span><span> };
+</span><span> 
+</span><span> void
+</span><span>diff --git a/kernel/syscall.h b/kernel/syscall.h
+</span><span>index bc5f356..382d781 100644
+</span><span>--- a/kernel/syscall.h
+</span><span>+++ b/kernel/syscall.h
+</span><span>@@ -20,3 +20,5 @@
+</span><span> #define SYS_link   19
+</span><span> #define SYS_mkdir  20
+</span><span> #define SYS_close  21
+</span><span style="color:#98c379;">+#define SYS_sigalarm  22
+</span><span style="color:#98c379;">+#define SYS_sigreturn 23
+</span><span>diff --git a/kernel/sysproc.c b/kernel/sysproc.c
+</span><span>index 4ef466f..583cf80 100644
+</span><span>--- a/kernel/sysproc.c
+</span><span>+++ b/kernel/sysproc.c
+</span><span>@@ -92,3 +92,27 @@ </span><span style="color:#61afef;">sys_uptime(void)
+</span><span>   release(&amp;tickslock);
+</span><span>   return xticks;
+</span><span> }
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+uint64
+</span><span style="color:#98c379;">+sys_sigalarm(void)
+</span><span style="color:#98c379;">+{
+</span><span style="color:#98c379;">+  struct proc* p = myproc();
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  argint(0, &amp;p-&gt;alarm_intervals);
+</span><span style="color:#98c379;">+  argaddr(1, (uint64*)&amp;p-&gt;alarm_handler);
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  p-&gt;alarm_tick_count = 0;
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  return 0;
+</span><span style="color:#98c379;">+}
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+uint64
+</span><span style="color:#98c379;">+sys_sigreturn(void)
+</span><span style="color:#98c379;">+{
+</span><span style="color:#98c379;">+  struct proc* p = myproc();
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  *p-&gt;trapframe = *p-&gt;alarm_trapframe;
+</span><span style="color:#98c379;">+  p-&gt;alarm_running = 0;
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  return p-&gt;trapframe-&gt;a0;
+</span><span style="color:#98c379;">+}
+</span><span>diff --git a/kernel/trap.c b/kernel/trap.c
+</span><span>index 512c850..94af5c0 100644
+</span><span>--- a/kernel/trap.c
+</span><span>+++ b/kernel/trap.c
+</span><span>@@ -67,6 +67,17 @@ </span><span style="color:#61afef;">usertrap(void)
+</span><span>     syscall();
+</span><span>   } else if((which_dev = devintr()) != 0){
+</span><span>     // ok
+</span><span style="color:#98c379;">+    if(which_dev == 2) {
+</span><span style="color:#98c379;">+      if (p-&gt;alarm_intervals &gt; 0) {
+</span><span style="color:#98c379;">+        p-&gt;alarm_tick_count++;
+</span><span style="color:#98c379;">+        if (p-&gt;alarm_tick_count == p-&gt;alarm_intervals &amp;&amp; p-&gt;alarm_running == 0) {
+</span><span style="color:#98c379;">+          *p-&gt;alarm_trapframe = *p-&gt;trapframe;
+</span><span style="color:#98c379;">+          p-&gt;trapframe-&gt;epc = (uint64)p-&gt;alarm_handler;
+</span><span style="color:#98c379;">+          p-&gt;alarm_tick_count = 0;
+</span><span style="color:#98c379;">+          p-&gt;alarm_running = 1;
+</span><span style="color:#98c379;">+        }
+</span><span style="color:#98c379;">+      }
+</span><span style="color:#98c379;">+    }
+</span><span>   } else {
+</span><span>     printf(&quot;usertrap(): unexpected scause %p pid=%d\n&quot;, r_scause(), p-&gt;pid);
+</span><span>     printf(&quot;            sepc=%p stval=%p\n&quot;, r_sepc(), r_stval());
+</span><span>diff --git a/user/user.h b/user/user.h
+</span><span>index 4d398d5..9426153 100644
+</span><span>--- a/user/user.h
+</span><span>+++ b/user/user.h
+</span><span>@@ -22,6 +22,8 @@ </span><span style="color:#61afef;">int getpid(void);
+</span><span> char* sbrk(int);
+</span><span> int sleep(int);
+</span><span> int uptime(void);
+</span><span style="color:#98c379;">+int sigalarm(int ticks, void (*handler)());
+</span><span style="color:#98c379;">+int sigreturn(void);
+</span><span> 
+</span><span> // ulib.c
+</span><span> int stat(const char*, struct stat*);
+</span><span>diff --git a/user/usys.pl b/user/usys.pl
+</span><span>index 01e426e..fa548b0 100755
+</span><span>--- a/user/usys.pl
+</span><span>+++ b/user/usys.pl
+</span><span>@@ -36,3 +36,5 @@ </span><span style="color:#61afef;">entry(&quot;getpid&quot;);
+</span><span> entry(&quot;sbrk&quot;);
+</span><span> entry(&quot;sleep&quot;);
+</span><span> entry(&quot;uptime&quot;);
+</span><span style="color:#98c379;">+entry(&quot;sigalarm&quot;);
+</span><span style="color:#98c379;">+entry(&quot;sigreturn&quot;);
+</span></code></pre>
+
+        </section>
+
+        
+            <div class="post-tags">
+                <nav class="nav tags">
+                    <ul class="tags">
+                        
+                            <li><a href=https://miaohn.github.io/tags/labs/>labs</a></li>
+                        
+                    </ul>
+                </nav>
+            </div>
+        
+
+    </article>
+
+    
+</main>
+
+
+
+        <footer>
+  <div class="footer-info">
+    2024 © MiaoHN
+  </div>
+</footer>
+    </div>
+</body>
+
+</html>

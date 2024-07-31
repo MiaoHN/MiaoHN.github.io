@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+
+    
+        <title>
+             MIT 6.S081 | 0x09 File system
+            
+        </title>
+
+        
+            <meta property="og:title" content="MIT 6.S081 | 0x09 File system" />
+        
+    
+
+    
+        
+            <meta property="og:description" content="文件系统可比锁简单多了（" />
+        
+    
+
+    
+        
+            <meta name="description" content="文件系统可比锁简单多了（" />
+        
+    
+
+    
+         <link rel="icon" type="image/png" href=&#x2F;icon&#x2F;favicon.png />
+    
+
+    
+
+    
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-6YGDB8SLBT"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', 'G-6YGDB8SLBT');
+        </script>
+    
+
+    
+    
+
+
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@1,500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Sans&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto+Mono" rel="stylesheet">
+
+    <link rel="stylesheet" type="text/css" media="screen" href=https://miaohn.github.io/main.css />
+
+    
+        <link
+            rel="stylesheet"
+            id="darkModeStyle"
+            type="text/css"
+            href=https://miaohn.github.io/dark.css
+            
+            
+        />
+    
+
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            renderMathInElement(document.body, {
+            // customised options
+            // • auto-render specific keys, e.g.:
+            delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false},
+                {left: '\\(', right: '\\)', display: false},
+                {left: '\\[', right: '\\]', display: true}
+            ],
+            // • rendering keys, e.g.:
+            throwOnError : false
+            });
+        });
+    </script>
+    
+
+         
+		<link href="https://unpkg.com/highlightjs-badge/highlightjs/styles/railscasts.css" rel="stylesheet">
+		<!-- https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.1.1/build/styles/  for min version -->
+		<script src="https://unpkg.com/highlightjs-badge/highlightjs/highlight.pack.js"></script>
+		<script src="https://unpkg.com/highlightjs-badge/highlightjs-badge.min.js"></script>
+		<script>
+			var pres = document.querySelectorAll("pre>code");
+			for (var i = 0; i < pres.length; i++) {
+				hljs.highlightBlock(pres[i]);
+			}
+		</script>
+		
+			<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js"></script>
+			<script>
+				var options = {
+					copyIconClass: "gg-clipboard",
+					checkIconClass: "gg-check"
+				};
+				window.highlightJsBadge(options);
+			</script>
+		
+
+	
+
+
+    
+
+
+</head>
+
+
+<body>
+    <div class="content">
+        <header>
+    <div class="main" id="main_title">
+        <a href=https:&#x2F;&#x2F;miaohn.github.io>MiaoHN&#x27;s Blog</a>
+    </div>
+
+    <nav>
+        
+            <a href=&#x2F;posts>Posts</a>
+        
+            <a href=&#x2F;tags>Tags</a>
+        
+            <a href=&#x2F;about>About</a>
+        
+
+        
+
+        
+    </nav>
+</header>
+
+
+        
+    
+<main>
+    <article>
+        <div class="title">
+            <h1 class="title">MIT 6.S081 | 0x09 File system</h1>
+            <div class="meta">
+                 2024-07-05
+
+                
+            </div>
+        </div>
+
+        
+
+        <section class="body">
+            <ul>
+<li>链接：<a href="https://pdos.csail.mit.edu/6.S081/2021/labs/fs.html">https://pdos.csail.mit.edu/6.S081/2021/labs/fs.html</a></li>
+<li>难度：🟦🟦</li>
+</ul>
+<div class="callout callout-tip">
+  <p>Before writing code, you should read &quot;Chapter 8: File system&quot; from the <a href="https://pdos.csail.mit.edu/6.S081/2021/xv6/book-riscv-rev2.pdf">xv6 book</a> and study the corresponding code.</p>
+
+</div><h2 id="large-files">🟦 Large files</h2>
+<blockquote>
+<p>Modify <code>bmap()</code> so that it implements a doubly-indirect block, in addition to direct blocks and a singly-indirect block. You'll have to have only 11 direct blocks, rather than 12, to make room for your new doubly-indirect block; you're not allowed to change the size of an on-disk inode. The first 11 elements of <code>ip-&gt;addrs[]</code> should be direct blocks; the 12th should be a singly-indirect block (just like the current one); the 13th should be your new doubly-indirect block. You are done with this exercise when <code>bigfile</code> writes 65803 blocks and <code>usertests</code> runs successfully</p>
+</blockquote>
+<h3 id="fen-xi">分析</h3>
+<p><img src="https://cdn.jsdelivr.net/gh/MiaoHN/image-host@master/images/20240705214531.png" alt="img1" />
+<em>文件 <code>inode</code> 结构</em></p>
+<p>xv6 的文件系统使用 <code>inode</code> 记录文件的元数据，其中 <code>addrs</code> 通过多级索引记录文件的数据块。这部分实验首先就需要读懂 <code>bmap()</code>，读懂代码流程，看懂上面这张图，实验就完成一半了，代码部分比较简单，下面直接看就行。</p>
+<div class="callout callout-tip">
+  <p>一定要记得把 <code>MAXFILE</code> 改一下，我就是因为忘了改，<code>bigfile</code> 一直通不过 😂</p>
+
+</div><h3 id="dai-ma">代码</h3>
+<pre data-lang="diff" style="background-color:#282c34;color:#dcdfe4;" class="language-diff "><code class="language-diff" data-lang="diff"><span>diff --git a/kernel/file.h b/kernel/file.h
+</span><span>index b076d1d..5c4eb3a 100644
+</span><span>--- a/kernel/file.h
+</span><span>+++ b/kernel/file.h
+</span><span>@@ -26,7 +26,7 @@ </span><span style="color:#61afef;">struct inode {
+</span><span>   short minor;
+</span><span>   short nlink;
+</span><span>   uint size;
+</span><span style="color:#e06c75;">-  uint addrs[NDIRECT+1];
+</span><span style="color:#98c379;">+  uint addrs[NDIRECT+2];
+</span><span> };
+</span><span> 
+</span><span> // map major device number to device functions.
+</span><span>diff --git a/kernel/fs.c b/kernel/fs.c
+</span><span>index c6bab15..c3927bf 100644
+</span><span>--- a/kernel/fs.c
+</span><span>+++ b/kernel/fs.c
+</span><span>@@ -416,6 +416,45 @@ </span><span style="color:#61afef;">bmap(struct inode *ip, uint bn)
+</span><span>     brelse(bp);
+</span><span>     return addr;
+</span><span>   }
+</span><span style="color:#98c379;">+  bn -= NINDIRECT;
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  if (bn &lt; NINDIRECT * NINDIRECT) {
+</span><span style="color:#98c379;">+    // Load doubly-indirect block, allocating if necessary.
+</span><span style="color:#98c379;">+    if ((addr = ip-&gt;addrs[NDIRECT + 1]) == 0) {
+</span><span style="color:#98c379;">+      addr = balloc(ip-&gt;dev);
+</span><span style="color:#98c379;">+      if (addr == 0) {
+</span><span style="color:#98c379;">+        return 0;
+</span><span style="color:#98c379;">+      }
+</span><span style="color:#98c379;">+      ip-&gt;addrs[NDIRECT + 1] = addr;
+</span><span style="color:#98c379;">+    }
+</span><span style="color:#98c379;">+    uint bnb = bn / NINDIRECT;  // b-th bucket in doubly-indirect block.
+</span><span style="color:#98c379;">+    uint bni = bn % NINDIRECT;  // i-th block in indirect block.
+</span><span style="color:#98c379;">+    // Load doubly-indirect block first.
+</span><span style="color:#98c379;">+    bp = bread(ip-&gt;dev, addr);
+</span><span style="color:#98c379;">+    a = (uint*)bp-&gt;data;
+</span><span style="color:#98c379;">+    if ((addr = a[bnb]) == 0) {
+</span><span style="color:#98c379;">+      addr = balloc(ip-&gt;dev);
+</span><span style="color:#98c379;">+      if (addr == 0) {
+</span><span style="color:#98c379;">+        brelse(bp);
+</span><span style="color:#98c379;">+        return 0;
+</span><span style="color:#98c379;">+      }
+</span><span style="color:#98c379;">+      a[bnb] = addr;
+</span><span style="color:#98c379;">+      log_write(bp);
+</span><span style="color:#98c379;">+    }
+</span><span style="color:#98c379;">+    brelse(bp);
+</span><span style="color:#98c379;">+    // Then indirect block.
+</span><span style="color:#98c379;">+    bp = bread(ip-&gt;dev, addr);
+</span><span style="color:#98c379;">+    a = (uint*)bp-&gt;data;
+</span><span style="color:#98c379;">+    if ((addr = a[bni]) == 0) {
+</span><span style="color:#98c379;">+      addr = balloc(ip-&gt;dev);
+</span><span style="color:#98c379;">+      if (addr) {
+</span><span style="color:#98c379;">+        a[bni] = addr;
+</span><span style="color:#98c379;">+        log_write(bp);
+</span><span style="color:#98c379;">+      }
+</span><span style="color:#98c379;">+    }
+</span><span style="color:#98c379;">+    brelse(bp);
+</span><span style="color:#98c379;">+    return addr;
+</span><span style="color:#98c379;">+  }
+</span><span> 
+</span><span>   panic(&quot;bmap: out of range&quot;);
+</span><span> }
+</span><span>@@ -425,9 +464,9 @@ </span><span style="color:#61afef;">bmap(struct inode *ip, uint bn)
+</span><span> void
+</span><span> itrunc(struct inode *ip)
+</span><span> {
+</span><span style="color:#e06c75;">-  int i, j;
+</span><span style="color:#e06c75;">-  struct buf *bp;
+</span><span style="color:#e06c75;">-  uint *a;
+</span><span style="color:#98c379;">+  int i, j, k;
+</span><span style="color:#98c379;">+  struct buf *bp, *bpi;
+</span><span style="color:#98c379;">+  uint *a, *ai;
+</span><span> 
+</span><span>   for(i = 0; i &lt; NDIRECT; i++){
+</span><span>     if(ip-&gt;addrs[i]){
+</span><span>@@ -448,6 +487,26 @@ </span><span style="color:#61afef;">itrunc(struct inode *ip)
+</span><span>     ip-&gt;addrs[NDIRECT] = 0;
+</span><span>   }
+</span><span> 
+</span><span style="color:#98c379;">+  if (ip-&gt;addrs[NDIRECT + 1]) {
+</span><span style="color:#98c379;">+    bp = bread(ip-&gt;dev, ip-&gt;addrs[NDIRECT + 1]);
+</span><span style="color:#98c379;">+    a = (uint*)bp-&gt;data;
+</span><span style="color:#98c379;">+    for (j = 0; j &lt; NINDIRECT; j++) {
+</span><span style="color:#98c379;">+      if (a[j]) {
+</span><span style="color:#98c379;">+        bpi = bread(ip-&gt;dev, a[j]);
+</span><span style="color:#98c379;">+        ai = (uint*)bpi-&gt;data;
+</span><span style="color:#98c379;">+        for (k = 0; k &lt; NINDIRECT; k++) {
+</span><span style="color:#98c379;">+          if (ai[k])
+</span><span style="color:#98c379;">+            bfree(ip-&gt;dev, ai[k]);
+</span><span style="color:#98c379;">+        }
+</span><span style="color:#98c379;">+        brelse(bpi);
+</span><span style="color:#98c379;">+        bfree(ip-&gt;dev, a[j]);
+</span><span style="color:#98c379;">+      }
+</span><span style="color:#98c379;">+    }
+</span><span style="color:#98c379;">+    brelse(bp);
+</span><span style="color:#98c379;">+    bfree(ip-&gt;dev, ip-&gt;addrs[NDIRECT + 1]);
+</span><span style="color:#98c379;">+    ip-&gt;addrs[NDIRECT + 1] = 0;
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+
+</span><span>   ip-&gt;size = 0;
+</span><span>   iupdate(ip);
+</span><span> }
+</span><span>diff --git a/kernel/fs.h b/kernel/fs.h
+</span><span>index 139dcc9..78c109d 100644
+</span><span>--- a/kernel/fs.h
+</span><span>+++ b/kernel/fs.h
+</span><span>@@ -24,9 +24,9 @@ </span><span style="color:#61afef;">struct superblock {
+</span><span> 
+</span><span> #define FSMAGIC 0x10203040
+</span><span> 
+</span><span style="color:#e06c75;">-#define NDIRECT 12
+</span><span style="color:#98c379;">+#define NDIRECT 11
+</span><span> #define NINDIRECT (BSIZE / sizeof(uint))
+</span><span style="color:#e06c75;">-#define MAXFILE (NDIRECT + NINDIRECT)
+</span><span style="color:#98c379;">+#define MAXFILE (NDIRECT + NINDIRECT + NINDIRECT * NINDIRECT)
+</span><span> 
+</span><span> // On-disk inode structure
+</span><span> struct dinode {
+</span><span>@@ -35,7 +35,7 @@ </span><span style="color:#61afef;">struct dinode {
+</span><span>   short minor;          // Minor device number (T_DEVICE only)
+</span><span>   short nlink;          // Number of links to inode in file system
+</span><span>   uint size;            // Size of file (bytes)
+</span><span style="color:#e06c75;">-  uint addrs[NDIRECT+1];   // Data block addresses
+</span><span style="color:#98c379;">+  uint addrs[NDIRECT+2];   // Data block addresses
+</span><span> };
+</span><span> 
+</span><span> // Inodes per block.
+</span></code></pre>
+<h2 id="symbolic-links">🟦 Symbolic links</h2>
+<blockquote>
+<p>You will implement the <code>symlink(char *target, char *path)</code> system call, which creates a new symbolic link at path that refers to file named by target. For further information, see the man page symlink. To test, add symlinktest to the Makefile and run it. Your solution is complete when the tests produce the following output (including usertests succeeding).</p>
+</blockquote>
+<h3 id="fen-xi-1">分析</h3>
+<p>首先复习一下 <a href="/posts/mit-6-s081-0x02">0x02 System calls</a> 中是如何添加系统调用的。然后就是实现 <code>symlink(char *target, char *path)</code> 系统调用，这个系统调用的功能是创建一个新的符号链接，指向 <code>target</code> 的文件。将 <code>path</code> 对应的 <code>inode</code> 类型改为 <code>T_SYMLINK</code>，然后在第一个 block 中直接记下 <code>target</code> 的路径就好，简单粗暴。</p>
+<h3 id="dai-ma-1">代码</h3>
+<pre data-lang="diff" style="background-color:#282c34;color:#dcdfe4;" class="language-diff "><code class="language-diff" data-lang="diff"><span>diff --git a/Makefile b/Makefile
+</span><span>index 9b83591..0506f87 100644
+</span><span>--- a/Makefile
+</span><span>+++ b/Makefile
+</span><span>@@ -188,6 +188,7 @@ </span><span style="color:#61afef;">UPROGS=\
+</span><span>   $U/_grind\
+</span><span>   $U/_wc\
+</span><span>   $U/_zombie\
+</span><span style="color:#98c379;">+  $U/_symlinktest\
+</span><span> 
+</span><span>diff --git a/kernel/fcntl.h b/kernel/fcntl.h
+</span><span>index 44861b9..e5e38e3 100644
+</span><span>--- a/kernel/fcntl.h
+</span><span>+++ b/kernel/fcntl.h
+</span><span>@@ -3,3 +3,4 @@
+</span><span> #define O_RDWR    0x002
+</span><span> #define O_CREATE  0x200
+</span><span> #define O_TRUNC   0x400
+</span><span style="color:#98c379;">+#define O_NOFOLLOW 0x800
+</span><span>diff --git a/kernel/stat.h b/kernel/stat.h
+</span><span>index 19543af..41a4dc3 100644
+</span><span>--- a/kernel/stat.h
+</span><span>+++ b/kernel/stat.h
+</span><span>@@ -1,6 +1,7 @@
+</span><span> #define T_DIR     1   // Directory
+</span><span> #define T_FILE    2   // File
+</span><span> #define T_DEVICE  3   // Device
+</span><span style="color:#98c379;">+#define T_SYMLINK 4   // Symlink
+</span><span> 
+</span><span> struct stat {
+</span><span>   int dev;     // File system&#39;s disk device
+</span><span>diff --git a/kernel/syscall.c b/kernel/syscall.c
+</span><span>index ed65409..52233e8 100644
+</span><span>--- a/kernel/syscall.c
+</span><span>+++ b/kernel/syscall.c
+</span><span>@@ -101,6 +101,7 @@ </span><span style="color:#61afef;">extern uint64 sys_unlink(void);
+</span><span> extern uint64 sys_link(void);
+</span><span> extern uint64 sys_mkdir(void);
+</span><span> extern uint64 sys_close(void);
+</span><span style="color:#98c379;">+extern uint64 sys_symlink(void);
+</span><span> 
+</span><span> // An array mapping syscall numbers from syscall.h
+</span><span> // to the function that handles the system call.
+</span><span>@@ -126,6 +127,7 @@ </span><span style="color:#61afef;">static uint64 (*syscalls[])(void) = {
+</span><span> [SYS_link]    sys_link,
+</span><span> [SYS_mkdir]   sys_mkdir,
+</span><span> [SYS_close]   sys_close,
+</span><span style="color:#98c379;">+[SYS_symlink] sys_symlink,
+</span><span> };
+</span><span> 
+</span><span> void
+</span><span>diff --git a/kernel/syscall.h b/kernel/syscall.h
+</span><span>index bc5f356..13818da 100644
+</span><span>--- a/kernel/syscall.h
+</span><span>+++ b/kernel/syscall.h
+</span><span>@@ -20,3 +20,4 @@
+</span><span> #define SYS_link   19
+</span><span> #define SYS_mkdir  20
+</span><span> #define SYS_close  21
+</span><span style="color:#98c379;">+#define SYS_symlink 22
+</span><span>diff --git a/kernel/sysfile.c b/kernel/sysfile.c
+</span><span>index 16b668c..04c53fa 100644
+</span><span>--- a/kernel/sysfile.c
+</span><span>+++ b/kernel/sysfile.c
+</span><span>@@ -323,11 +323,31 @@ </span><span style="color:#61afef;">sys_open(void)
+</span><span>       return -1;
+</span><span>     }
+</span><span>   } else {
+</span><span style="color:#e06c75;">-    if((ip = namei(path)) == 0){
+</span><span style="color:#e06c75;">-      end_op();
+</span><span style="color:#e06c75;">-      return -1;
+</span><span style="color:#98c379;">+    int sym_depth = 0;
+</span><span style="color:#98c379;">+    while (1) {
+</span><span style="color:#98c379;">+      if((ip = namei(path)) == 0){
+</span><span style="color:#98c379;">+        end_op();
+</span><span style="color:#98c379;">+        return -1;
+</span><span style="color:#98c379;">+      }
+</span><span style="color:#98c379;">+      ilock(ip);
+</span><span style="color:#98c379;">+      if (ip-&gt;type == T_SYMLINK &amp;&amp; (omode &amp; O_NOFOLLOW) == 0) {
+</span><span style="color:#98c379;">+        if (sym_depth &gt; 10) {
+</span><span style="color:#98c379;">+          iunlockput(ip);
+</span><span style="color:#98c379;">+          end_op();
+</span><span style="color:#98c379;">+          return -1;
+</span><span style="color:#98c379;">+        } else {
+</span><span style="color:#98c379;">+          ++sym_depth;
+</span><span style="color:#98c379;">+        }
+</span><span style="color:#98c379;">+        if (readi(ip, 0, (uint64)path, 0, MAXPATH) &lt; 0) {
+</span><span style="color:#98c379;">+          iunlockput(ip);
+</span><span style="color:#98c379;">+          end_op();
+</span><span style="color:#98c379;">+          return -1;
+</span><span style="color:#98c379;">+        }
+</span><span style="color:#98c379;">+        iunlockput(ip);
+</span><span style="color:#98c379;">+      } else {
+</span><span style="color:#98c379;">+        break;
+</span><span style="color:#98c379;">+      }
+</span><span>     }
+</span><span style="color:#e06c75;">-    ilock(ip);
+</span><span>     if(ip-&gt;type == T_DIR &amp;&amp; omode != O_RDONLY){
+</span><span>       iunlockput(ip);
+</span><span>       end_op();
+</span><span>@@ -503,3 +523,31 @@ </span><span style="color:#61afef;">sys_pipe(void)
+</span><span>   }
+</span><span>   return 0;
+</span><span> }
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+uint64
+</span><span style="color:#98c379;">+sys_symlink(void)
+</span><span style="color:#98c379;">+{
+</span><span style="color:#98c379;">+  char target[MAXPATH], path[MAXPATH];
+</span><span style="color:#98c379;">+  struct inode *ip;
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  if (argstr(0, target, MAXPATH) &lt; 0 || argstr(1, path, MAXPATH) &lt; 0)
+</span><span style="color:#98c379;">+    return -1;
+</span><span style="color:#98c379;">+  
+</span><span style="color:#98c379;">+  
+</span><span style="color:#98c379;">+  begin_op();
+</span><span style="color:#98c379;">+  ip = create(path, T_SYMLINK, 0, 0);
+</span><span style="color:#98c379;">+  if (ip == 0) {
+</span><span style="color:#98c379;">+    end_op();
+</span><span style="color:#98c379;">+    return -1;
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  if (writei(ip, 0, (uint64)target, 0, strlen(target)) &lt; 0) {
+</span><span style="color:#98c379;">+    end_op();
+</span><span style="color:#98c379;">+    return -1;
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  iunlockput(ip);
+</span><span style="color:#98c379;">+  end_op();
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  return 0;
+</span><span style="color:#98c379;">+}
+</span><span>diff --git a/user/user.h b/user/user.h
+</span><span>index 4d398d5..23060fd 100644
+</span><span>--- a/user/user.h
+</span><span>+++ b/user/user.h
+</span><span>@@ -22,6 +22,7 @@ </span><span style="color:#61afef;">int getpid(void);
+</span><span> char* sbrk(int);
+</span><span> int sleep(int);
+</span><span> int uptime(void);
+</span><span style="color:#98c379;">+int symlink(const char*, const char*);
+</span><span> 
+</span><span> // ulib.c
+</span><span> int stat(const char*, struct stat*);
+</span><span>diff --git a/user/usys.pl b/user/usys.pl
+</span><span>index 01e426e..bc5c22e 100755
+</span><span>--- a/user/usys.pl
+</span><span>+++ b/user/usys.pl
+</span><span>@@ -36,3 +36,4 @@ </span><span style="color:#61afef;">entry(&quot;getpid&quot;);
+</span><span> entry(&quot;sbrk&quot;);
+</span><span> entry(&quot;sleep&quot;);
+</span><span> entry(&quot;uptime&quot;);
+</span><span style="color:#98c379;">+entry(&quot;symlink&quot;);
+</span></code></pre>
+
+        </section>
+
+        
+            <div class="post-tags">
+                <nav class="nav tags">
+                    <ul class="tags">
+                        
+                            <li><a href=https://miaohn.github.io/tags/labs/>labs</a></li>
+                        
+                    </ul>
+                </nav>
+            </div>
+        
+
+    </article>
+
+    
+</main>
+
+
+
+        <footer>
+  <div class="footer-info">
+    2024 © MiaoHN
+  </div>
+</footer>
+    </div>
+</body>
+
+</html>

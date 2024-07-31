@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+
+    
+        <title>
+             MIT 6.S081 | 0x00 Introduction
+            
+        </title>
+
+        
+            <meta property="og:title" content="MIT 6.S081 | 0x00 Introduction" />
+        
+    
+
+    
+        
+            <meta property="og:description" content="最近想复习一下操作系统的知识，同时久闻 6.828 大名，于是就想跟一跟这个实验" />
+        
+    
+
+    
+        
+            <meta name="description" content="最近想复习一下操作系统的知识，同时久闻 6.828 大名，于是就想跟一跟这个实验" />
+        
+    
+
+    
+         <link rel="icon" type="image/png" href=&#x2F;icon&#x2F;favicon.png />
+    
+
+    
+
+    
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-6YGDB8SLBT"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', 'G-6YGDB8SLBT');
+        </script>
+    
+
+    
+    
+
+
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@1,500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Sans&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto+Mono" rel="stylesheet">
+
+    <link rel="stylesheet" type="text/css" media="screen" href=https://miaohn.github.io/main.css />
+
+    
+        <link
+            rel="stylesheet"
+            id="darkModeStyle"
+            type="text/css"
+            href=https://miaohn.github.io/dark.css
+            
+            
+        />
+    
+
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            renderMathInElement(document.body, {
+            // customised options
+            // • auto-render specific keys, e.g.:
+            delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false},
+                {left: '\\(', right: '\\)', display: false},
+                {left: '\\[', right: '\\]', display: true}
+            ],
+            // • rendering keys, e.g.:
+            throwOnError : false
+            });
+        });
+    </script>
+    
+
+         
+		<link href="https://unpkg.com/highlightjs-badge/highlightjs/styles/railscasts.css" rel="stylesheet">
+		<!-- https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.1.1/build/styles/  for min version -->
+		<script src="https://unpkg.com/highlightjs-badge/highlightjs/highlight.pack.js"></script>
+		<script src="https://unpkg.com/highlightjs-badge/highlightjs-badge.min.js"></script>
+		<script>
+			var pres = document.querySelectorAll("pre>code");
+			for (var i = 0; i < pres.length; i++) {
+				hljs.highlightBlock(pres[i]);
+			}
+		</script>
+		
+			<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js"></script>
+			<script>
+				var options = {
+					copyIconClass: "gg-clipboard",
+					checkIconClass: "gg-check"
+				};
+				window.highlightJsBadge(options);
+			</script>
+		
+
+	
+
+
+    
+
+
+</head>
+
+
+<body>
+    <div class="content">
+        <header>
+    <div class="main" id="main_title">
+        <a href=https:&#x2F;&#x2F;miaohn.github.io>MiaoHN&#x27;s Blog</a>
+    </div>
+
+    <nav>
+        
+            <a href=&#x2F;posts>Posts</a>
+        
+            <a href=&#x2F;tags>Tags</a>
+        
+            <a href=&#x2F;about>About</a>
+        
+
+        
+
+        
+    </nav>
+</header>
+
+
+        
+    
+<main>
+    <article>
+        <div class="title">
+            <h1 class="title">MIT 6.S081 | 0x00 Introduction</h1>
+            <div class="meta">
+                 2023-11-24
+
+                
+            </div>
+        </div>
+
+        
+
+        <section class="body">
+            <p>MIT 6.S081 的全名为“Operating System Engineering”，它的前身是大名鼎鼎的 6.828。这门课程通过十多个实验让我们逐步了解操作系统的组成与原理，而且 MIT 的教授还专门为这们课实现了一个迷你的操作系统 xv6，麻雀虽小，五脏俱全，虽然对真正的操作系统做了很多简化，但操作系统的精髓还是得到了完整的体现。最近想复习一下操作系统的知识，同时久闻 6.828 大名，于是就想跟一跟这个实验</p>
+<div class="callout callout-warning">
+  <p>6.S081 这门课程每年的实验任务可能都不太一样。读者请注意，<strong>我做的是 2021 年的版本</strong></p>
+
+</div><h2 id="ke-cheng-zi-liao">课程资料</h2>
+<ul>
+<li>课程主页：<a href="https://pdos.csail.mit.edu/6.S081/2021/index.html">https://pdos.csail.mit.edu/6.S081/2021/index.html</a></li>
+<li>参考书籍：<a href="https://pdos.csail.mit.edu/6.S081/2020/xv6/book-riscv-rev1.pdf">xv6: a simple, Unix-like teaching operating system</a></li>
+</ul>
+<h2 id="nan-du-hua-fen">难度划分</h2>
+<ul>
+<li>🟩(easy)：用时不超过一个小时。通常用来热身</li>
+<li>🟦(medium)：需要 1~2 个小时</li>
+<li>🟥(hard)：2 个小时以上。通常代码量不多，但是需要理解原理或者思路</li>
+</ul>
+<h2 id="huan-jing-zhun-bei">环境准备</h2>
+<p>本实验的全部内容均在 linux 操作系统上进行，虚拟机，WSL2 以及实体机都可以。xv6 是一个在 qemu 上跑的 riscv 架构的系统，要提前安装一些必要的组件，如果你使用的是 Debian/Ubuntu，可以按照如下方式下载：</p>
+<pre data-lang="bash" style="background-color:#282c34;color:#dcdfe4;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#e06c75;">sudo</span><span> apt-get install git build-essential gdb-multiarch qemu-system-misc \
+</span><span>  gcc-riscv64-linux-gnu binutils-riscv64-linux-gnu
+</span></code></pre>
+<p>如果你用的是 Arch，可以安装下面的包：</p>
+<pre data-lang="bash" style="background-color:#282c34;color:#dcdfe4;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#e06c75;">sudo</span><span> pacman</span><span style="color:#e06c75;"> -S</span><span> riscv64-linux-gnu-binutils riscv64-linux-gnu-gcc \
+</span><span>  riscv64-linux-gnu-gdb qemu-arch-extra
+</span></code></pre>
+<div class="callout callout-tip">
+  <p>部分包名可能会有区别，可以搜索一个最相似的包进行安装</p>
+
+</div><h2 id="shi-yan-lie-biao">实验列表</h2>
+<table><thead><tr><th style="text-align: left">实验名称</th><th style="text-align: center">难度</th></tr></thead><tbody>
+<tr><td style="text-align: left"><a href="/posts/mit-6-s081-0x01">0x01 Utilities</a></td><td style="text-align: center">🟩🟩🟩🟦🟦🟦</td></tr>
+<tr><td style="text-align: left"><a href="/posts/mit-6-s081-0x02">0x02 System calls</a></td><td style="text-align: center">🟦🟦</td></tr>
+<tr><td style="text-align: left"><a href="/posts/mit-6-s081-0x03">0x03 Page tables</a></td><td style="text-align: center">🟩🟩🟥</td></tr>
+<tr><td style="text-align: left"><a href="/posts/mit-6-s081-0x04">0x04 Traps</a></td><td style="text-align: center">🟩🟦🟥</td></tr>
+<tr><td style="text-align: left"><a href="/posts/mit-6-s081-0x05">0x05 Copy on-write</a></td><td style="text-align: center">🟥</td></tr>
+<tr><td style="text-align: left"><a href="/posts/mit-6-s081-0x06">0x06 Multithreading</a></td><td style="text-align: center">🟦🟦🟦</td></tr>
+<tr><td style="text-align: left"><a href="/posts/mit-6-s081-0x07">0x07 Networking</a></td><td style="text-align: center">🟥</td></tr>
+<tr><td style="text-align: left"><a href="/posts/mit-6-s081-0x08">0x08 Locks</a></td><td style="text-align: center">🟦🟥</td></tr>
+<tr><td style="text-align: left"><a href="/posts/mit-6-s081-0x09">0x09 File system</a></td><td style="text-align: center">🟦🟦</td></tr>
+<tr><td style="text-align: left"><a href="/posts/mit-6-s081-0x0a">0x0a Mmap</a></td><td style="text-align: center">🟥</td></tr>
+</tbody></table>
+<h2 id="shi-yan-zong-jie">实验总结</h2>
+<p>从 2023/11/24 做到 2024/07/05，历时 8 个月，终于完成了 MIT 6.S081 的全部实验。我只能说自己的拖延也太厉害了 😂，老是做着做着就忘了，一忘就是几个月。前几天实在受不了，正好课上完了，组会讲完了，就一口气把后面的都做了。</p>
+<p>老实说，我其实做的并不细致，最后两个实验还借鉴了其他人的代码，但并不妨碍我学到很多操作系统的知识。这门课 实验难度还算不错，提示也很完整。十个实验做完，感觉操作系统的实现是真的精致，虽然 xv6 是一个简化的系统，但是它在各部分的抽象，设计，实现都很精妙。就是单拿出来一小部分代码，感觉也不算很难，也没有用什么高深算法，但将各种部分组合在一起，真的需要极大的创造性和工作量。</p>
+<p>虽然全部都做完了，但是战线拉得太长，有的内容掌握的不太好。后面有时间可能会针对 <code>xv6</code> 的一些模块出几篇总结，顺道复习复习。</p>
+
+        </section>
+
+        
+            <div class="post-tags">
+                <nav class="nav tags">
+                    <ul class="tags">
+                        
+                            <li><a href=https://miaohn.github.io/tags/labs/>labs</a></li>
+                        
+                    </ul>
+                </nav>
+            </div>
+        
+
+    </article>
+
+    
+    <aside id="toc">
+        <div id="TableOfContents">
+            <div class="toc-title">目录</div>
+            <ul>
+                
+                <li>
+                    <a href="https://miaohn.github.io/posts/mit-6-s081-0x00/#ke-cheng-zi-liao">课程资料</a>
+                    
+                </li>
+                
+                <li>
+                    <a href="https://miaohn.github.io/posts/mit-6-s081-0x00/#nan-du-hua-fen">难度划分</a>
+                    
+                </li>
+                
+                <li>
+                    <a href="https://miaohn.github.io/posts/mit-6-s081-0x00/#huan-jing-zhun-bei">环境准备</a>
+                    
+                </li>
+                
+                <li>
+                    <a href="https://miaohn.github.io/posts/mit-6-s081-0x00/#shi-yan-lie-biao">实验列表</a>
+                    
+                </li>
+                
+                <li>
+                    <a href="https://miaohn.github.io/posts/mit-6-s081-0x00/#shi-yan-zong-jie">实验总结</a>
+                    
+                </li>
+                
+            </ul>
+        </div>
+    </aside>
+    
+</main>
+
+
+
+        <footer>
+  <div class="footer-info">
+    2024 © MiaoHN
+  </div>
+</footer>
+    </div>
+</body>
+
+</html>

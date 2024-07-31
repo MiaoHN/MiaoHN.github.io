@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+
+    
+        <title>
+             MIT 6.S081 | 0x06 Multithreading
+            
+        </title>
+
+        
+            <meta property="og:title" content="MIT 6.S081 | 0x06 Multithreading" />
+        
+    
+
+    
+        
+    
+
+    
+        
+    
+
+    
+         <link rel="icon" type="image/png" href=&#x2F;icon&#x2F;favicon.png />
+    
+
+    
+
+    
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-6YGDB8SLBT"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', 'G-6YGDB8SLBT');
+        </script>
+    
+
+    
+    
+
+
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@1,500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Sans&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto+Mono" rel="stylesheet">
+
+    <link rel="stylesheet" type="text/css" media="screen" href=https://miaohn.github.io/main.css />
+
+    
+        <link
+            rel="stylesheet"
+            id="darkModeStyle"
+            type="text/css"
+            href=https://miaohn.github.io/dark.css
+            
+            
+        />
+    
+
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            renderMathInElement(document.body, {
+            // customised options
+            // • auto-render specific keys, e.g.:
+            delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false},
+                {left: '\\(', right: '\\)', display: false},
+                {left: '\\[', right: '\\]', display: true}
+            ],
+            // • rendering keys, e.g.:
+            throwOnError : false
+            });
+        });
+    </script>
+    
+
+         
+		<link href="https://unpkg.com/highlightjs-badge/highlightjs/styles/railscasts.css" rel="stylesheet">
+		<!-- https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.1.1/build/styles/  for min version -->
+		<script src="https://unpkg.com/highlightjs-badge/highlightjs/highlight.pack.js"></script>
+		<script src="https://unpkg.com/highlightjs-badge/highlightjs-badge.min.js"></script>
+		<script>
+			var pres = document.querySelectorAll("pre>code");
+			for (var i = 0; i < pres.length; i++) {
+				hljs.highlightBlock(pres[i]);
+			}
+		</script>
+		
+			<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js"></script>
+			<script>
+				var options = {
+					copyIconClass: "gg-clipboard",
+					checkIconClass: "gg-check"
+				};
+				window.highlightJsBadge(options);
+			</script>
+		
+
+	
+
+
+    
+
+
+</head>
+
+
+<body>
+    <div class="content">
+        <header>
+    <div class="main" id="main_title">
+        <a href=https:&#x2F;&#x2F;miaohn.github.io>MiaoHN&#x27;s Blog</a>
+    </div>
+
+    <nav>
+        
+            <a href=&#x2F;posts>Posts</a>
+        
+            <a href=&#x2F;tags>Tags</a>
+        
+            <a href=&#x2F;about>About</a>
+        
+
+        
+
+        
+    </nav>
+</header>
+
+
+        
+    
+<main>
+    <article>
+        <div class="title">
+            <h1 class="title">MIT 6.S081 | 0x06 Multithreading</h1>
+            <div class="meta">
+                 2024-03-09
+
+                
+            </div>
+        </div>
+
+        
+
+        <section class="body">
+            <ul>
+<li>链接：<a href="https://pdos.csail.mit.edu/6.S081/2021/labs/thread.html">https://pdos.csail.mit.edu/6.S081/2021/labs/thread.html</a></li>
+<li>难度：🟦🟦🟦</li>
+</ul>
+<p>书接<a href="/posts/mit-6-s081-0x05">上回</a>，这次的实验是关于多线程的原理和实现，个人感觉这节很有意思，实验的实现代码没几行，不到 2 个小时就把全部任务完成了。</p>
+<div class="callout callout-info">
+  <p>如果我勤快，可能会出一期关于多线程转换实现相关的文章。至于啥时候出就说不准了 😌。</p>
+
+</div><h2 id="uthread-switching-between-threads">🟦 Uthread: switching between threads</h2>
+<p>线程的切换和进程切换做的工作有些相似，都要保存原有线程/进程的寄存器的值，然后再载入新的寄存器的值。为了方便，我就直接把 <code>kernel/proc.h</code> 和 <code>kernel/swtch.S</code> 这两个文件关于 <code>context</code> 的部分复制到 <code>user/uthread.c</code> 里了。</p>
+<div class="callout callout-info">
+  <p>唯一的难点在于创建新线程，在创建线程的时候要对 <code>context</code> 进行初始化，主要有两点工作：</p>
+<ol>
+<li>初始化线程栈。要将 <code>context.sp</code> 指向栈顶，这里注意栈是从高位空间往低位空间增长的</li>
+<li>函数入口。这里我迷惑了一下，不知道怎么执行线程对应的函数。略微检索了一下，其实将函数入口地址存到寄存器 <code>ra</code> 就可以了，在线程执行过程中就会自动跳转到对应的函数</li>
+</ol>
+
+</div><pre data-lang="diff" style="background-color:#282c34;color:#dcdfe4;" class="language-diff "><code class="language-diff" data-lang="diff"><span>diff --git a/user/uthread.c b/user/uthread.c
+</span><span>index 06349f5..1db73ef 100644
+</span><span>--- a/user/uthread.c
+</span><span>+++ b/user/uthread.c
+</span><span>@@ -10,10 +10,30 @@
+</span><span> #define STACK_SIZE  8192
+</span><span> #define MAX_THREAD  4
+</span><span> 
+</span><span style="color:#98c379;">+struct context {
+</span><span style="color:#98c379;">+  uint64 ra;
+</span><span style="color:#98c379;">+  uint64 sp;
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  // callee-saved
+</span><span style="color:#98c379;">+  uint64 s0;
+</span><span style="color:#98c379;">+  uint64 s1;
+</span><span style="color:#98c379;">+  uint64 s2;
+</span><span style="color:#98c379;">+  uint64 s3;
+</span><span style="color:#98c379;">+  uint64 s4;
+</span><span style="color:#98c379;">+  uint64 s5;
+</span><span style="color:#98c379;">+  uint64 s6;
+</span><span style="color:#98c379;">+  uint64 s7;
+</span><span style="color:#98c379;">+  uint64 s8;
+</span><span style="color:#98c379;">+  uint64 s9;
+</span><span style="color:#98c379;">+  uint64 s10;
+</span><span style="color:#98c379;">+  uint64 s11;
+</span><span style="color:#98c379;">+};
+</span><span> 
+</span><span> struct thread {
+</span><span>   char       stack[STACK_SIZE]; /* the thread&#39;s stack */
+</span><span>   int        state;             /* FREE, RUNNING, RUNNABLE */
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  struct context context;
+</span><span> };
+</span><span> struct thread all_thread[MAX_THREAD];
+</span><span> struct thread *current_thread;
+</span><span>@@ -62,6 +82,7 @@ </span><span style="color:#61afef;">thread_schedule(void)
+</span><span>      * Invoke thread_switch to switch from t to next_thread:
+</span><span>      * thread_switch(??, ??);
+</span><span>      */
+</span><span style="color:#98c379;">+    thread_switch((uint64)&amp;t-&gt;context, (uint64)&amp;current_thread-&gt;context);
+</span><span>   } else
+</span><span>     next_thread = 0;
+</span><span> }
+</span><span>@@ -76,6 +97,9 @@ </span><span style="color:#61afef;">thread_create(void (*func)())
+</span><span>   }
+</span><span>   t-&gt;state = RUNNABLE;
+</span><span>   // YOUR CODE HERE
+</span><span style="color:#98c379;">+  memset(&amp;t-&gt;context, 0, sizeof(t-&gt;context));
+</span><span style="color:#98c379;">+  t-&gt;context.sp = (uint64)t-&gt;stack + STACK_SIZE;
+</span><span style="color:#98c379;">+  t-&gt;context.ra = (uint64)func;
+</span><span> }
+</span><span> 
+</span><span> void 
+</span><span>diff --git a/user/uthread_switch.S b/user/uthread_switch.S
+</span><span>index 5defb12..22e6482 100644
+</span><span>--- a/user/uthread_switch.S
+</span><span>+++ b/user/uthread_switch.S
+</span><span>@@ -8,4 +8,34 @@
+</span><span> .globl thread_switch
+</span><span> thread_switch:
+</span><span>   /* YOUR CODE HERE */
+</span><span style="color:#98c379;">+  sd ra, 0(a0)
+</span><span style="color:#98c379;">+  sd sp, 8(a0)
+</span><span style="color:#98c379;">+  sd s0, 16(a0)
+</span><span style="color:#98c379;">+  sd s1, 24(a0)
+</span><span style="color:#98c379;">+  sd s2, 32(a0)
+</span><span style="color:#98c379;">+  sd s3, 40(a0)
+</span><span style="color:#98c379;">+  sd s4, 48(a0)
+</span><span style="color:#98c379;">+  sd s5, 56(a0)
+</span><span style="color:#98c379;">+  sd s6, 64(a0)
+</span><span style="color:#98c379;">+  sd s7, 72(a0)
+</span><span style="color:#98c379;">+  sd s8, 80(a0)
+</span><span style="color:#98c379;">+  sd s9, 88(a0)
+</span><span style="color:#98c379;">+  sd s10, 96(a0)
+</span><span style="color:#98c379;">+  sd s11, 104(a0)
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  ld ra, 0(a1)
+</span><span style="color:#98c379;">+  ld sp, 8(a1)
+</span><span style="color:#98c379;">+  ld s0, 16(a1)
+</span><span style="color:#98c379;">+  ld s1, 24(a1)
+</span><span style="color:#98c379;">+  ld s2, 32(a1)
+</span><span style="color:#98c379;">+  ld s3, 40(a1)
+</span><span style="color:#98c379;">+  ld s4, 48(a1)
+</span><span style="color:#98c379;">+  ld s5, 56(a1)
+</span><span style="color:#98c379;">+  ld s6, 64(a1)
+</span><span style="color:#98c379;">+  ld s7, 72(a1)
+</span><span style="color:#98c379;">+  ld s8, 80(a1)
+</span><span style="color:#98c379;">+  ld s9, 88(a1)
+</span><span style="color:#98c379;">+  ld s10, 96(a1)
+</span><span style="color:#98c379;">+  ld s11, 104(a1)
+</span><span style="color:#98c379;">+
+</span><span>   ret    /* return to ra */
+</span></code></pre>
+<h2 id="using-threads">🟦 Using threads</h2>
+<p>这个任务算是让我们熟悉 pthread 这个用户线程库的基本使用，非常简单，6 行代码解决。因为需要顾及时间，所以对锁的粒度有一定的要求。<code>notxv6/ph.c</code> 实现了一个极简的 hash table，将这个 table 分了 5 个 buckets，所以我就创建了 5 个锁，分别处理这 5 个 buckets。这样的话，两个线程可以同时处理不同的 bucket 而不占用同一把锁，相对来说在速度上会有一点提升。</p>
+<pre data-lang="diff" style="background-color:#282c34;color:#dcdfe4;" class="language-diff "><code class="language-diff" data-lang="diff"><span>diff --git a/notxv6/ph.c b/notxv6/ph.c
+</span><span>index 82afe76..9d0582d 100644
+</span><span>--- a/notxv6/ph.c
+</span><span>+++ b/notxv6/ph.c
+</span><span>@@ -14,6 +14,7 @@ </span><span style="color:#61afef;">struct entry {
+</span><span>   struct entry *next;
+</span><span> };
+</span><span> struct entry *table[NBUCKET];
+</span><span style="color:#98c379;">+pthread_mutex_t locks[NBUCKET];
+</span><span> int keys[NKEYS];
+</span><span> int nthread = 1;
+</span><span> 
+</span><span>@@ -47,6 +48,7 @@ </span><span style="color:#61afef;">void put(int key, int value)
+</span><span>     if (e-&gt;key == key)
+</span><span>       break;
+</span><span>   }
+</span><span style="color:#98c379;">+  pthread_mutex_lock(&amp;locks[i]);
+</span><span>   if(e){
+</span><span>     // update the existing key.
+</span><span>     e-&gt;value = value;
+</span><span>@@ -54,7 +56,7 @@ </span><span style="color:#61afef;">void put(int key, int value)
+</span><span>     // the new is new.
+</span><span>     insert(key, value, &amp;table[i], table[i]);
+</span><span>   }
+</span><span style="color:#e06c75;">-
+</span><span style="color:#98c379;">+  pthread_mutex_unlock(&amp;locks[i]);
+</span><span> }
+</span><span> 
+</span><span> static struct entry*
+</span><span>@@ -118,6 +120,10 @@ </span><span style="color:#61afef;">main(int argc, char *argv[])
+</span><span>     keys[i] = random();
+</span><span>   }
+</span><span> 
+</span><span style="color:#98c379;">+  for (int i = 0; i &lt; NBUCKET; i++) {
+</span><span style="color:#98c379;">+    pthread_mutex_init(&amp;locks[i], NULL);
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+
+</span><span>   //
+</span><span>   // first the puts
+</span><span>   //
+</span></code></pre>
+<h2 id="barrier">🟦 Barrier</h2>
+<p>和上面一样，这个任务是让我们学习 <code>pthread_cond_t</code> 的使用，相关的函数用法这里不再给出，唯一要注意的一点是 <code>pthread_cond_wait()</code> 这个函数中，作为参数的 <code>bstate.barrier_mutex</code> 应该先被锁住，这在 <code>pthread_cond_wait()</code> 函数的注释中也有提及。</p>
+<pre data-lang="diff" style="background-color:#282c34;color:#dcdfe4;" class="language-diff "><code class="language-diff" data-lang="diff"><span>diff --git a/notxv6/barrier.c b/notxv6/barrier.c
+</span><span>index 12793e8..bc94a6b 100644
+</span><span>--- a/notxv6/barrier.c
+</span><span>+++ b/notxv6/barrier.c
+</span><span>@@ -30,7 +30,18 @@ </span><span style="color:#61afef;">barrier()
+</span><span>   // Block until all threads have called barrier() and
+</span><span>   // then increment bstate.round.
+</span><span>   //
+</span><span style="color:#e06c75;">-  
+</span><span style="color:#98c379;">+  pthread_mutex_lock(&amp;bstate.barrier_mutex);
+</span><span style="color:#98c379;">+  bstate.nthread++;
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  if (bstate.nthread != nthread) {
+</span><span style="color:#98c379;">+    pthread_cond_wait(&amp;bstate.barrier_cond, &amp;bstate.barrier_mutex);
+</span><span style="color:#98c379;">+  } else {
+</span><span style="color:#98c379;">+    bstate.round++;
+</span><span style="color:#98c379;">+    bstate.nthread = 0;
+</span><span style="color:#98c379;">+    pthread_cond_broadcast(&amp;bstate.barrier_cond);
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+  pthread_mutex_unlock(&amp;bstate.barrier_mutex);
+</span><span style="color:#98c379;">+
+</span><span> }
+</span><span> 
+</span><span> static void *
+</span></code></pre>
+
+        </section>
+
+        
+            <div class="post-tags">
+                <nav class="nav tags">
+                    <ul class="tags">
+                        
+                            <li><a href=https://miaohn.github.io/tags/labs/>labs</a></li>
+                        
+                    </ul>
+                </nav>
+            </div>
+        
+
+    </article>
+
+    
+</main>
+
+
+
+        <footer>
+  <div class="footer-info">
+    2024 © MiaoHN
+  </div>
+</footer>
+    </div>
+</body>
+
+</html>

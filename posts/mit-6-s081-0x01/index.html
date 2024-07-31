@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+
+    
+        <title>
+             MIT 6.S081 | 0x01 Utilities
+            
+        </title>
+
+        
+            <meta property="og:title" content="MIT 6.S081 | 0x01 Utilities" />
+        
+    
+
+    
+        
+    
+
+    
+        
+    
+
+    
+         <link rel="icon" type="image/png" href=&#x2F;icon&#x2F;favicon.png />
+    
+
+    
+
+    
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-6YGDB8SLBT"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', 'G-6YGDB8SLBT');
+        </script>
+    
+
+    
+    
+
+
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@1,500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Sans&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto+Mono" rel="stylesheet">
+
+    <link rel="stylesheet" type="text/css" media="screen" href=https://miaohn.github.io/main.css />
+
+    
+        <link
+            rel="stylesheet"
+            id="darkModeStyle"
+            type="text/css"
+            href=https://miaohn.github.io/dark.css
+            
+            
+        />
+    
+
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            renderMathInElement(document.body, {
+            // customised options
+            // • auto-render specific keys, e.g.:
+            delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false},
+                {left: '\\(', right: '\\)', display: false},
+                {left: '\\[', right: '\\]', display: true}
+            ],
+            // • rendering keys, e.g.:
+            throwOnError : false
+            });
+        });
+    </script>
+    
+
+         
+		<link href="https://unpkg.com/highlightjs-badge/highlightjs/styles/railscasts.css" rel="stylesheet">
+		<!-- https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.1.1/build/styles/  for min version -->
+		<script src="https://unpkg.com/highlightjs-badge/highlightjs/highlight.pack.js"></script>
+		<script src="https://unpkg.com/highlightjs-badge/highlightjs-badge.min.js"></script>
+		<script>
+			var pres = document.querySelectorAll("pre>code");
+			for (var i = 0; i < pres.length; i++) {
+				hljs.highlightBlock(pres[i]);
+			}
+		</script>
+		
+			<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js"></script>
+			<script>
+				var options = {
+					copyIconClass: "gg-clipboard",
+					checkIconClass: "gg-check"
+				};
+				window.highlightJsBadge(options);
+			</script>
+		
+
+	
+
+
+    
+
+
+</head>
+
+
+<body>
+    <div class="content">
+        <header>
+    <div class="main" id="main_title">
+        <a href=https:&#x2F;&#x2F;miaohn.github.io>MiaoHN&#x27;s Blog</a>
+    </div>
+
+    <nav>
+        
+            <a href=&#x2F;posts>Posts</a>
+        
+            <a href=&#x2F;tags>Tags</a>
+        
+            <a href=&#x2F;about>About</a>
+        
+
+        
+
+        
+    </nav>
+</header>
+
+
+        
+    
+<main>
+    <article>
+        <div class="title">
+            <h1 class="title">MIT 6.S081 | 0x01 Utilities</h1>
+            <div class="meta">
+                 2023-11-26
+
+                
+            </div>
+        </div>
+
+        
+
+        <section class="body">
+            <ul>
+<li>链接：<a href="https://pdos.csail.mit.edu/6.S081/2021/labs/util.html">https://pdos.csail.mit.edu/6.S081/2021/labs/util.html</a></li>
+<li>难度：🟩🟩🟩🟦🟦🟦</li>
+</ul>
+<p>这次实验通过几个小的任务让我们熟悉实验的流程以及 xv6 系统的整体概况。从名字可以看出，这次实验只是实现了几个小工具。不过我却花了不少的时间。主要的原因还是对项目结构不熟悉，不清楚怎么开始，看了一些代码，遇到不懂的函数就看看是怎么实现的，结果就是花的时间有点久。不过还好，最后还是把所有任务都做完了</p>
+<h2 id="boot-xv6">🟩 Boot xv6</h2>
+<p>xv6 的代码由 git 管理，需要在 Linux 环境中执行下面的命令获得：</p>
+<pre data-lang="bash" style="background-color:#282c34;color:#dcdfe4;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#e06c75;">git</span><span> clone git://g.csail.mit.edu/xv6-labs-2020
+</span></code></pre>
+<p>进入该文件夹后你会发现这里面什么都没有，这是因为每一次的实验都在单独的分支，所以对于这一次的实验，需要转到 <code>util</code> 分支进行</p>
+<pre data-lang="bash" style="background-color:#282c34;color:#dcdfe4;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#e06c75;">git</span><span> checkout util
+</span></code></pre>
+<p>现在，文件夹里就多了很多代码，这就是 xv6 的全部代码了（其中还有一些功能可能需要我们以后添加），现在可以尝试运行一下 xv6 系统来检验一下环境是否正常</p>
+<pre data-lang="bash" style="background-color:#282c34;color:#dcdfe4;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#e06c75;">$</span><span> make qemu
+</span><span style="color:#e06c75;">riscv64-unknown-elf-gcc    -c -o</span><span> kernel/entry.o kernel/entry.S
+</span><span style="color:#e06c75;">riscv64-unknown-elf-gcc -Wall -Werror -O -fno-omit-frame-pointer -ggdb</span><span> ...
+</span><span style="color:#e06c75;">...
+</span><span>
+</span><span style="color:#e06c75;">xv6</span><span> kernel is booting
+</span><span>
+</span><span style="color:#e06c75;">hart</span><span> 2 starting
+</span><span style="color:#e06c75;">hart</span><span> 1 starting
+</span><span style="color:#e06c75;">init:</span><span> starting sh
+</span><span style="color:#e06c75;">$ 
+</span></code></pre>
+<p>如果能得到与上面类似的结果，那么说明环境没问题。如果跑不起来，那请你看看<a href="https://pdos.csail.mit.edu/6.S081/2020/tools.html">这里</a>检查一下有什么包没有安装合适</p>
+<div class="callout callout-tip">
+  <p>如果要退出 qemu，请先按 <code>Ctrl</code> + <code>A</code>，再按 <code>X</code></p>
+
+</div><h2 id="sleep">🟩 sleep</h2>
+<blockquote>
+<p>Implement the UNIX program sleep for xv6; your sleep should pause for a user-specified number of ticks. A tick is a notion of time defined by the xv6 kernel, namely the time between two interrupts from the timer chip. Your solution should be in the file <code>user/sleep.c</code>.</p>
+</blockquote>
+<p>这个任务需要我们实现一个程序 <code>sleep</code>，通过暂停指定的 <code>tick</code> 数来实现，同时题目中也提示这个 <code>tick</code> 是定时器芯片每两次中断之间的间隔。同时提示里还指出要我们使用系统调用 <code>sleep</code>，那就先看看这个系统调用在哪里吧</p>
+<pre data-lang="c" style="background-color:#282c34;color:#dcdfe4;" class="language-c "><code class="language-c" data-lang="c"><span style="color:#5c6370;">// system call
+</span><span style="color:#c678dd;">...
+</span><span style="color:#c678dd;">char* </span><span style="color:#61afef;">sbrk</span><span>(</span><span style="color:#e06c75;">int</span><span>);
+</span><span style="color:#c678dd;">int </span><span style="color:#61afef;">sleep</span><span>(</span><span style="color:#e06c75;">int</span><span>);
+</span><span style="color:#c678dd;">int </span><span style="color:#61afef;">uptime</span><span>(</span><span style="color:#c678dd;">void</span><span>);
+</span><span>
+</span><span style="color:#5c6370;">// ulib.c
+</span><span style="color:#c678dd;">...
+</span></code></pre>
+<p>在 <code>user/user.h</code> 的第 23 行可以看到这个 <code>sleep</code> 系统调用的签名，这个系统调用接受一个 <code>int</code>，返回也是一个 <code>int</code>，然后找了一会儿函数的定义。在整个项目里搜索 <code>sleep</code> 这个单词，最后在 <code>user/usys.pl</code> 里面找到了线索：</p>
+<pre data-lang="perl" style="background-color:#282c34;color:#dcdfe4;" class="language-perl "><code class="language-perl" data-lang="perl"><span style="color:#c678dd;">...
+</span><span style="color:#c678dd;">sub </span><span style="color:#61afef;">entry </span><span>{
+</span><span>    </span><span style="color:#c678dd;">my </span><span style="color:#e06c75;">$name </span><span style="color:#c678dd;">= </span><span style="color:#61afef;">shift</span><span>;
+</span><span>    </span><span style="color:#61afef;">print </span><span style="color:#98c379;">&quot;.global </span><span style="color:#e06c75;">$name</span><span style="color:#56b6c2;">\n</span><span style="color:#98c379;">&quot;</span><span>;
+</span><span>    </span><span style="color:#61afef;">print </span><span style="color:#98c379;">&quot;</span><span style="color:#c678dd;">$</span><span>{</span><span style="color:#98c379;">name</span><span>}</span><span style="color:#98c379;">:</span><span style="color:#56b6c2;">\n</span><span style="color:#98c379;">&quot;</span><span>;
+</span><span>    </span><span style="color:#61afef;">print </span><span style="color:#98c379;">&quot; li a7, SYS_</span><span style="color:#c678dd;">$</span><span>{</span><span style="color:#98c379;">name</span><span>}</span><span style="color:#56b6c2;">\n</span><span style="color:#98c379;">&quot;</span><span>;
+</span><span>    </span><span style="color:#61afef;">print </span><span style="color:#98c379;">&quot; ecall</span><span style="color:#56b6c2;">\n</span><span style="color:#98c379;">&quot;</span><span>;
+</span><span>    </span><span style="color:#61afef;">print </span><span style="color:#98c379;">&quot; ret</span><span style="color:#56b6c2;">\n</span><span style="color:#98c379;">&quot;</span><span>;
+</span><span>}
+</span><span style="color:#c678dd;">...
+</span><span style="color:#e06c75;">entry</span><span>(</span><span style="color:#98c379;">&quot;sbrk&quot;</span><span>);
+</span><span style="color:#e06c75;">entry</span><span>(</span><span style="color:#98c379;">&quot;sleep&quot;</span><span>);
+</span><span style="color:#e06c75;">entry</span><span>(</span><span style="color:#98c379;">&quot;uptime&quot;</span><span>);
+</span></code></pre>
+<p>通过上面的脚本，<code>make qemu</code> 运行后会在 <code>user/usys.S</code> 生成如下的汇编：</p>
+<pre data-lang="s" style="background-color:#282c34;color:#dcdfe4;" class="language-s "><code class="language-s" data-lang="s"><span>.global sleep
+</span><span>sleep:
+</span><span> li a7, SYS_sleep
+</span><span> ecall
+</span><span> ret
+</span></code></pre>
+<p>上面这段汇编的意思是将 <code>SYS_sleep</code> 的值存到指定的位置（<code>a7</code>）中，然后使用 <code>ecall</code> 让系统来接管系统调用后续的工作。根据这条线索，找到了 <code>SYS_sleep</code> 的位置在 <code>kernel/syscall.h:14</code>，原来 <code>SYS_sleep</code> 只是一个数，值为 13，这个值在用于 <code>kernel/syscall.c:107</code> 的系统调用表，最终调用的是 <code>sys_sleep</code> 这个函数。这下终于找到了这个系统调用的实现的位置了：</p>
+<pre data-lang="c" style="background-color:#282c34;color:#dcdfe4;" class="language-c "><code class="language-c" data-lang="c"><span>uint64
+</span><span style="color:#61afef;">sys_sleep</span><span>(</span><span style="color:#c678dd;">void</span><span>)
+</span><span>{
+</span><span>  </span><span style="color:#c678dd;">int</span><span> n;
+</span><span>  uint ticks0;
+</span><span>
+</span><span>  </span><span style="color:#e06c75;">argint</span><span>(</span><span style="color:#e5c07b;">0</span><span>, </span><span style="color:#c678dd;">&amp;</span><span>n);
+</span><span>  </span><span style="color:#e06c75;">acquire</span><span>(</span><span style="color:#c678dd;">&amp;</span><span>tickslock);
+</span><span>  ticks0 </span><span style="color:#c678dd;">=</span><span> ticks;
+</span><span>  </span><span style="color:#c678dd;">while</span><span>(ticks </span><span style="color:#c678dd;">-</span><span> ticks0 </span><span style="color:#c678dd;">&lt;</span><span> n){
+</span><span>    </span><span style="color:#c678dd;">if</span><span>(</span><span style="color:#e06c75;">killed</span><span>(</span><span style="color:#e06c75;">myproc</span><span>())){
+</span><span>      </span><span style="color:#e06c75;">release</span><span>(</span><span style="color:#c678dd;">&amp;</span><span>tickslock);
+</span><span>      </span><span style="color:#c678dd;">return -</span><span style="color:#e5c07b;">1</span><span>;
+</span><span>    }
+</span><span>    </span><span style="color:#e06c75;">sleep</span><span>(</span><span style="color:#c678dd;">&amp;</span><span>ticks, </span><span style="color:#c678dd;">&amp;</span><span>tickslock);
+</span><span>  }
+</span><span>  </span><span style="color:#e06c75;">release</span><span>(</span><span style="color:#c678dd;">&amp;</span><span>tickslock);
+</span><span>  </span><span style="color:#c678dd;">return </span><span style="color:#e5c07b;">0</span><span>;
+</span><span>}
+</span></code></pre>
+<p>然而读完这个函数，只能知道这个系统调用 <code>int sleep(int)</code> 的输入是一个 <code>tick</code> 数，再就无法获得更多的信息了。所以问题来了，**多少个 <code>tick</code> 相当于 1 秒呢？**再次使用 <code>ticks</code> 作关键词也没查到有用的信息。我猜测可能在系统初始化的时候有相关的内容。最后，终于在 <code>kernel/start.c:69</code> 看到了直接的答案：</p>
+<pre data-lang="c" style="background-color:#282c34;color:#dcdfe4;" class="language-c "><code class="language-c" data-lang="c"><span style="color:#c678dd;">...
+</span><span>  </span><span style="color:#5c6370;">// ask the CLINT for a timer interrupt.
+</span><span>  </span><span style="color:#c678dd;">int</span><span> interval </span><span style="color:#c678dd;">= </span><span style="color:#e5c07b;">1000000</span><span>; </span><span style="color:#5c6370;">// cycles; about 1/10th second in qemu.
+</span><span>  </span><span style="color:#c678dd;">*</span><span>(uint64</span><span style="color:#c678dd;">*</span><span>)</span><span style="color:#e06c75;">CLINT_MTIMECMP</span><span>(id) </span><span style="color:#c678dd;">= *</span><span>(uint64</span><span style="color:#c678dd;">*</span><span>)CLINT_MTIME </span><span style="color:#c678dd;">+</span><span> interval;
+</span><span style="color:#c678dd;">...
+</span></code></pre>
+<p>原来 <strong>qemu 中的 1 个 tick 相当于现实世界的 1 秒</strong>嘛。这样的话就简单了，下面是这个任务中修改的代码：</p>
+<pre data-lang="diff" style="background-color:#282c34;color:#dcdfe4;" class="language-diff "><code class="language-diff" data-lang="diff"><span>diff --git a/Makefile b/Makefile
+</span><span>index ded5bc2..969397a 100644
+</span><span>--- a/Makefile
+</span><span>+++ b/Makefile
+</span><span>@@ -183,6 +183,7 @@ </span><span style="color:#61afef;">UPROGS=\
+</span><span>  $U/_mkdir\
+</span><span>  $U/_rm\
+</span><span>  $U/_sh\
+</span><span style="color:#98c379;">+ $U/_sleep\
+</span><span>  $U/_stressfs\
+</span><span>  $U/_usertests\
+</span><span>  $U/_grind\
+</span><span>diff --git a/user/sleep.c b/user/sleep.c
+</span><span>new file mode 100644
+</span><span>index 0000000..052b318
+</span><span>--- /dev/null
+</span><span>+++ b/user/sleep.c
+</span><span>@@ -0,0 +1,19 @@
+</span><span style="color:#98c379;">+#include &quot;kernel/types.h&quot;
+</span><span style="color:#98c379;">+#include &quot;kernel/stat.h&quot;
+</span><span style="color:#98c379;">+#include &quot;user/user.h&quot;
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+int
+</span><span style="color:#98c379;">+main(int argc, char *argv[])
+</span><span style="color:#98c379;">+{
+</span><span style="color:#98c379;">+  if(argc &lt; 2){
+</span><span style="color:#98c379;">+    fprintf(2, &quot;Usage: sleep seconds\n&quot;);
+</span><span style="color:#98c379;">+    exit(1);
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  // see kenel/start.c:69
+</span><span style="color:#98c379;">+  int sec = atoi(argv[1]);
+</span><span style="color:#98c379;">+  int tick = sec * 10;
+</span><span style="color:#98c379;">+  sleep(tick);
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  exit(0);
+</span><span style="color:#98c379;">+}
+</span></code></pre>
+<h2 id="pingpong">🟩 pingpong</h2>
+<blockquote>
+<p>Write a program that uses UNIX system calls to &quot;ping-pong&quot; a byte between two processes over a pair of pipes, one for each direction. The parent should send a byte to the child; the child should print &quot;&lt;pid&gt;: received ping&quot;, where &lt;pid&gt; is its process ID, write the byte on the pipe to the parent, and exit; the parent should read the byte from the child, print &quot;&lt;pid&gt;: received pong&quot;, and exit. Your solution should be in the file <code>user/pingpong.c</code>.</p>
+</blockquote>
+<p>这个任务的目的是让我们熟悉管道的操作。整体的流程为：</p>
+<ol>
+<li>创建管道，并创建子进程</li>
+<li>父进程向管道写一个 byte 数据</li>
+<li>子进程从管道读一个 byte 数据，然后再将其写回去</li>
+<li>父进程从管道读一个 byte 数据</li>
+</ol>
+<p>本任务的代码修改情况如下：</p>
+<pre data-lang="diff" style="background-color:#282c34;color:#dcdfe4;" class="language-diff "><code class="language-diff" data-lang="diff"><span>diff --git a/Makefile b/Makefile
+</span><span>index 969397a..1c17fe0 100644
+</span><span>--- a/Makefile
+</span><span>+++ b/Makefile
+</span><span>@@ -181,6 +181,7 @@ </span><span style="color:#61afef;">UPROGS=\
+</span><span>  $U/_ln\
+</span><span>  $U/_ls\
+</span><span>  $U/_mkdir\
+</span><span style="color:#98c379;">+ $U/_pingpong\
+</span><span>  $U/_rm\
+</span><span>  $U/_sh\
+</span><span>  $U/_sleep\
+</span><span>diff --git a/user/pingpong.c b/user/pingpong.c
+</span><span>new file mode 100644
+</span><span>index 0000000..b966cff
+</span><span>--- /dev/null
+</span><span>+++ b/user/pingpong.c
+</span><span>@@ -0,0 +1,34 @@
+</span><span style="color:#98c379;">+#include &quot;kernel/types.h&quot;
+</span><span style="color:#98c379;">+#include &quot;kernel/stat.h&quot;
+</span><span style="color:#98c379;">+#include &quot;user/user.h&quot;
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+int
+</span><span style="color:#98c379;">+main(int argc, char *argv[])
+</span><span style="color:#98c379;">+{
+</span><span style="color:#98c379;">+  int p[2];
+</span><span style="color:#98c379;">+  char byte = &#39;a&#39;;
+</span><span style="color:#98c379;">+  pipe(p);
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  if (fork() == 0) {
+</span><span style="color:#98c379;">+    // child
+</span><span style="color:#98c379;">+    int pid = getpid();
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+    read(p[0], &amp;byte, 1);
+</span><span style="color:#98c379;">+    printf(&quot;%d: received ping\n&quot;, pid);
+</span><span style="color:#98c379;">+    close(p[0]);
+</span><span style="color:#98c379;">+    write(p[1], &amp;byte, 1);
+</span><span style="color:#98c379;">+    close(p[1]);
+</span><span style="color:#98c379;">+  } else {
+</span><span style="color:#98c379;">+    // parent
+</span><span style="color:#98c379;">+    int pid = getpid();
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+    write(p[1], &amp;byte, 1);
+</span><span style="color:#98c379;">+    close(p[1]);
+</span><span style="color:#98c379;">+    read(p[0], &amp;byte, 1);
+</span><span style="color:#98c379;">+    printf(&quot;%d: received pong\n&quot;, pid);
+</span><span style="color:#98c379;">+    close(p[0]);
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  exit(0);
+</span><span style="color:#98c379;">+}
+</span></code></pre>
+<h2 id="primes">🟦 primes</h2>
+<blockquote>
+<p>Write a concurrent version of prime sieve using pipes. This idea is due to Doug McIlroy, inventor of Unix pipes. The picture halfway down <a href="https://swtch.com/~rsc/thread/">this page</a> and the surrounding text explain how to do it. Your solution should be in the file <code>user/primes.c</code>.</p>
+</blockquote>
+<p>这个任务需要实现一个质数筛，使用的算法倒是很少见，下面是这个算法的示意图：</p>
+<p><img src="https://cdn.jsdelivr.net/gh/MiaoHN/image-host@master/images/20240608102308.png" alt="primes" /></p>
+<p>它的伪代码如下</p>
+<pre data-lang="python" style="background-color:#282c34;color:#dcdfe4;" class="language-python "><code class="language-python" data-lang="python"><span>p </span><span style="color:#c678dd;">= </span><span>get a number </span><span style="color:#c678dd;">from </span><span>left neighbor
+</span><span style="color:#c678dd;">print </span><span>p
+</span><span>loop:
+</span><span>    n </span><span style="color:#c678dd;">= </span><span>get a number </span><span style="color:#c678dd;">from </span><span>left neighbor
+</span><span>    </span><span style="color:#c678dd;">if </span><span>(p does </span><span style="color:#c678dd;">not </span><span>divide n)
+</span><span>        send n to right neighbor
+</span></code></pre>
+<p>根据图示，可以想到将每一个块抽象为一个函数，将左侧的管道作为输入，第一个读到的数一定是质数，然后将其余的数输入到右侧的管道中。因为在提示中只需生成小于 35 的质数，所以在每一个块中可以将左侧管道中读到的数全部存到一个数组中做缓存。下面是代码修改情况</p>
+<pre data-lang="diff" style="background-color:#282c34;color:#dcdfe4;" class="language-diff "><code class="language-diff" data-lang="diff"><span>diff --git a/Makefile b/Makefile
+</span><span>index 1c17fe0..0fe144a 100644
+</span><span>--- a/Makefile
+</span><span>+++ b/Makefile
+</span><span>@@ -182,6 +182,7 @@ </span><span style="color:#61afef;">UPROGS=\
+</span><span>  $U/_ls\
+</span><span>  $U/_mkdir\
+</span><span>  $U/_pingpong\
+</span><span style="color:#98c379;">+ $U/_primes\
+</span><span>  $U/_rm\
+</span><span>  $U/_sh\
+</span><span>  $U/_sleep\
+</span><span>diff --git a/user/primes.c b/user/primes.c
+</span><span>new file mode 100644
+</span><span>index 0000000..d3aa3f6
+</span><span>--- /dev/null
+</span><span>+++ b/user/primes.c
+</span><span>@@ -0,0 +1,56 @@
+</span><span style="color:#98c379;">+#include &quot;kernel/types.h&quot;
+</span><span style="color:#98c379;">+#include &quot;kernel/stat.h&quot;
+</span><span style="color:#98c379;">+#include &quot;user/user.h&quot;
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+void
+</span><span style="color:#98c379;">+filter(int* pl)
+</span><span style="color:#98c379;">+{
+</span><span style="color:#98c379;">+  int nums[35];
+</span><span style="color:#98c379;">+  int cnt = 0;
+</span><span style="color:#98c379;">+  char buf[1];
+</span><span style="color:#98c379;">+  int pr[2];
+</span><span style="color:#98c379;">+  pipe(pr);
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  for (;;) {
+</span><span style="color:#98c379;">+    int r = read(pl[0], buf, sizeof(buf));
+</span><span style="color:#98c379;">+    if (r == 0) break;
+</span><span style="color:#98c379;">+    nums[cnt++] = buf[0];
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+  close(pl[0]);
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  if (cnt == 0) return;
+</span><span style="color:#98c379;">+  int first = nums[0];
+</span><span style="color:#98c379;">+  printf(&quot;prime %d\n&quot;, first);
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  for (int i = 0; i &lt; cnt; ++i) {
+</span><span style="color:#98c379;">+    if (nums[i] % first != 0) {
+</span><span style="color:#98c379;">+      buf[0] = nums[i];
+</span><span style="color:#98c379;">+      write(pr[1], buf, sizeof(buf));
+</span><span style="color:#98c379;">+    }
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+  close(pr[1]);
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  int pid = fork();
+</span><span style="color:#98c379;">+  if (pid == 0) {
+</span><span style="color:#98c379;">+    filter(pr);
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+}
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+int
+</span><span style="color:#98c379;">+main(int argc, char *argv[])
+</span><span style="color:#98c379;">+{
+</span><span style="color:#98c379;">+  int p[2];
+</span><span style="color:#98c379;">+  pipe(p);
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  for (int i = 2; i &lt; 35; ++i) {
+</span><span style="color:#98c379;">+    char c = i;
+</span><span style="color:#98c379;">+    write(p[1], &amp;c, 1);
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+  close(p[1]);
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  filter(p);
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  wait(0);
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  exit(0);
+</span><span style="color:#98c379;">+}
+</span></code></pre>
+<h2 id="find">🟦 find</h2>
+<blockquote>
+<p>Write a simple version of the UNIX find program: find all the files in a directory tree with a specific name. Your solution should be in the file <code>user/find.c</code>.</p>
+</blockquote>
+<p>这个任务需要我们实现一个 <code>find</code> 函数。在提示中也指出让我们参考一下 <code>user/ls.c</code> 这个文件。做的过程中没遇到什么问题，就是要把 <code>user/ls.c:26</code> 的 <code>ls</code> 函数搜索文件目录的过程看懂就可以了，下面是这一部分的代码修改：</p>
+<pre data-lang="diff" style="background-color:#282c34;color:#dcdfe4;" class="language-diff "><code class="language-diff" data-lang="diff"><span>diff --git a/Makefile b/Makefile
+</span><span>index 0fe144a..ce27992 100644
+</span><span>--- a/Makefile
+</span><span>+++ b/Makefile
+</span><span>@@ -174,6 +174,7 @@ </span><span style="color:#61afef;">mkfs/mkfs: mkfs/mkfs.c $K/fs.h $K/param.h
+</span><span> UPROGS=\
+</span><span>  $U/_cat\
+</span><span>  $U/_echo\
+</span><span style="color:#98c379;">+ $U/_find\
+</span><span>  $U/_forktest\
+</span><span>  $U/_grep\
+</span><span>  $U/_init\
+</span><span>diff --git a/user/find.c b/user/find.c
+</span><span>new file mode 100644
+</span><span>index 0000000..ba1dec2
+</span><span>--- /dev/null
+</span><span>+++ b/user/find.c
+</span><span>@@ -0,0 +1,63 @@
+</span><span style="color:#98c379;">+#include &quot;kernel/types.h&quot;
+</span><span style="color:#98c379;">+#include &quot;kernel/stat.h&quot;
+</span><span style="color:#98c379;">+#include &quot;user/user.h&quot;
+</span><span style="color:#98c379;">+#include &quot;kernel/fs.h&quot;
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+void
+</span><span style="color:#98c379;">+find(char* dir, char *name)
+</span><span style="color:#98c379;">+{
+</span><span style="color:#98c379;">+  char buf[512], *p;
+</span><span style="color:#98c379;">+  int fd;
+</span><span style="color:#98c379;">+  struct dirent de;
+</span><span style="color:#98c379;">+  struct stat st;
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  if ((fd = open(dir, 0)) &lt; 0) {
+</span><span style="color:#98c379;">+    fprintf(2, &quot;find: cannot open %s\n&quot;, dir);
+</span><span style="color:#98c379;">+    return;
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  if (fstat(fd, &amp;st) &lt; 0) {
+</span><span style="color:#98c379;">+    fprintf(2, &quot;find: cannot stat %s\n&quot;, dir);
+</span><span style="color:#98c379;">+    close(fd);
+</span><span style="color:#98c379;">+    return;
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+  if (st.type != T_DIR) {
+</span><span style="color:#98c379;">+    close(fd);
+</span><span style="color:#98c379;">+    return;
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+  if (strlen(dir) + 1 + DIRSIZ + 1 &gt; sizeof buf) {
+</span><span style="color:#98c379;">+    printf(&quot;find: path too long\n&quot;);
+</span><span style="color:#98c379;">+    close(fd);
+</span><span style="color:#98c379;">+    return;
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+  strcpy(buf, dir);
+</span><span style="color:#98c379;">+  p = buf + strlen(buf);
+</span><span style="color:#98c379;">+  *p++ = &#39;/&#39;;
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  while (read(fd, &amp;de, sizeof(de)) == sizeof(de)) {
+</span><span style="color:#98c379;">+    if (de.inum == 0)
+</span><span style="color:#98c379;">+      continue;
+</span><span style="color:#98c379;">+    memmove(p, de.name, DIRSIZ);
+</span><span style="color:#98c379;">+    p[DIRSIZ] = 0;
+</span><span style="color:#98c379;">+    if (strcmp(p, &quot;.&quot;) == 0 || strcmp(p, &quot;..&quot;) == 0)
+</span><span style="color:#98c379;">+      continue;
+</span><span style="color:#98c379;">+    if (strcmp(p, name) == 0) {
+</span><span style="color:#98c379;">+      printf(&quot;%s\n&quot;, buf);
+</span><span style="color:#98c379;">+    }
+</span><span style="color:#98c379;">+    find(buf, name);
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+  close(fd);
+</span><span style="color:#98c379;">+}
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+int
+</span><span style="color:#98c379;">+main(int argc, char *argv[])
+</span><span style="color:#98c379;">+{
+</span><span style="color:#98c379;">+  if (argc != 3) {
+</span><span style="color:#98c379;">+    printf(&quot;usage: find dir name\n&quot;);
+</span><span style="color:#98c379;">+    exit(1);
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  find(argv[1], argv[2]);
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  exit(0);
+</span><span style="color:#98c379;">+}
+</span></code></pre>
+<h2 id="xargs">🟦 xargs</h2>
+<blockquote>
+<p>Write a simple version of the UNIX xargs program: read lines from the standard input and run a command for each line, supplying the line as arguments to the command. Your solution should be in the file <code>user/xargs.c</code>.</p>
+</blockquote>
+<p>这个任务让我们实现一个命令 <code>xargs</code>。这个命令以前好像见过，只不过不理解，通过这次实验总算是理解了，<a href="https://www.ruanyifeng.com/blog/2019/08/xargs-tutorial.html">阮一峰的博客</a>里有详细的解释。简单来说，在 linux 系统中，有的命令只能在命令行输入参数，比如 <code>echo</code>，用管道的方法无法输出任何内容：</p>
+<pre data-lang="bash" style="background-color:#282c34;color:#dcdfe4;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#61afef;">echo </span><span style="color:#98c379;">&quot;Hello&quot; </span><span style="color:#c678dd;">| </span><span style="color:#61afef;">echo
+</span></code></pre>
+<p>这里就可以用 <code>xargs</code> 传参：</p>
+<pre data-lang="bash" style="background-color:#282c34;color:#dcdfe4;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#61afef;">echo </span><span style="color:#98c379;">&quot;Hello&quot; </span><span style="color:#c678dd;">| </span><span style="color:#e06c75;">xargs</span><span> echo
+</span></code></pre>
+<p>还有，<code>xargs</code> 可以进行一些批量操作，比如在当前文件夹下从文件名中带有 <code>dir</code> 的所有文件中查找 <code>hello</code> 这个词：</p>
+<pre data-lang="bash" style="background-color:#282c34;color:#dcdfe4;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#e06c75;">find</span><span> . dir </span><span style="color:#c678dd;">| </span><span style="color:#e06c75;">xargs</span><span> grep hello
+</span></code></pre>
+<p>本次实验中实现的 <code>xargs</code> 的功能与上面的类似，从标准输入中得到一系列的输入，这些输入会以空格或换行分隔，然后将每个分隔后的内容添加到 <code>xargs</code> 后面命令的末尾即可，就是说将按照空格或回车为分界的输入分别添加到 <code>argv</code> 这个字符串数组的后面用 <code>exec</code> 执行即可。本部分代码的修改情况如下：</p>
+<pre data-lang="diff" style="background-color:#282c34;color:#dcdfe4;" class="language-diff "><code class="language-diff" data-lang="diff"><span>diff --git a/Makefile b/Makefile
+</span><span>index ce27992..7d7f929 100644
+</span><span>--- a/Makefile
+</span><span>+++ b/Makefile
+</span><span>@@ -191,6 +191,7 @@ </span><span style="color:#61afef;">UPROGS=\
+</span><span>  $U/_usertests\
+</span><span>  $U/_grind\
+</span><span>  $U/_wc\
+</span><span style="color:#98c379;">+ $U/_xargs\
+</span><span>  $U/_zombie\
+</span><span>
+</span><span>
+</span><span>diff --git a/user/xargs.c b/user/xargs.c
+</span><span>new file mode 100644
+</span><span>index 0000000..954e140
+</span><span>--- /dev/null
+</span><span>+++ b/user/xargs.c
+</span><span>@@ -0,0 +1,40 @@
+</span><span style="color:#98c379;">+#include &quot;kernel/types.h&quot;
+</span><span style="color:#98c379;">+#include &quot;kernel/param.h&quot;
+</span><span style="color:#98c379;">+#include &quot;kernel/stat.h&quot;
+</span><span style="color:#98c379;">+#include &quot;user/user.h&quot;
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+void
+</span><span style="color:#98c379;">+run(int argc, char *argv[], char* left)
+</span><span style="color:#98c379;">+{
+</span><span style="color:#98c379;">+  argv[argc++] = left;
+</span><span style="color:#98c379;">+  argv[argc] = 0;
+</span><span style="color:#98c379;">+  int pid = fork();
+</span><span style="color:#98c379;">+  if (pid == 0) {
+</span><span style="color:#98c379;">+    exec(argv[1], argv + 1);
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+  wait(0);
+</span><span style="color:#98c379;">+}
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+int
+</span><span style="color:#98c379;">+main(int argc, char *argv[])
+</span><span style="color:#98c379;">+{
+</span><span style="color:#98c379;">+  char buf[100];
+</span><span style="color:#98c379;">+  int r;
+</span><span style="color:#98c379;">+  int len = 0;
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  while ((r = read(0, buf + len, sizeof(buf + len))) != 0) {
+</span><span style="color:#98c379;">+    len += r;
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+  buf[len] = 0;
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  char *p = buf;
+</span><span style="color:#98c379;">+  for (int i = 0; i &lt; len; ++i) {
+</span><span style="color:#98c379;">+    if (buf[i] == &#39;\n&#39; || buf[i] == &#39; &#39;) {
+</span><span style="color:#98c379;">+      buf[i] = 0;
+</span><span style="color:#98c379;">+      run(argc, argv, p);
+</span><span style="color:#98c379;">+      p = buf + i + 1;
+</span><span style="color:#98c379;">+    }
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  exit(0);
+</span><span style="color:#98c379;">+}
+</span></code></pre>
+
+        </section>
+
+        
+            <div class="post-tags">
+                <nav class="nav tags">
+                    <ul class="tags">
+                        
+                            <li><a href=https://miaohn.github.io/tags/labs/>labs</a></li>
+                        
+                    </ul>
+                </nav>
+            </div>
+        
+
+    </article>
+
+    
+    <aside id="toc">
+        <div id="TableOfContents">
+            <div class="toc-title">目录</div>
+            <ul>
+                
+                <li>
+                    <a href="https://miaohn.github.io/posts/mit-6-s081-0x01/#boot-xv6">🟩 Boot xv6</a>
+                    
+                </li>
+                
+                <li>
+                    <a href="https://miaohn.github.io/posts/mit-6-s081-0x01/#sleep">🟩 sleep</a>
+                    
+                </li>
+                
+                <li>
+                    <a href="https://miaohn.github.io/posts/mit-6-s081-0x01/#pingpong">🟩 pingpong</a>
+                    
+                </li>
+                
+                <li>
+                    <a href="https://miaohn.github.io/posts/mit-6-s081-0x01/#primes">🟦 primes</a>
+                    
+                </li>
+                
+                <li>
+                    <a href="https://miaohn.github.io/posts/mit-6-s081-0x01/#find">🟦 find</a>
+                    
+                </li>
+                
+                <li>
+                    <a href="https://miaohn.github.io/posts/mit-6-s081-0x01/#xargs">🟦 xargs</a>
+                    
+                </li>
+                
+            </ul>
+        </div>
+    </aside>
+    
+</main>
+
+
+
+        <footer>
+  <div class="footer-info">
+    2024 © MiaoHN
+  </div>
+</footer>
+    </div>
+</body>
+
+</html>

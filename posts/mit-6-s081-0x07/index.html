@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+
+    
+        <title>
+             MIT 6.S081 | 0x07 Networking
+            
+        </title>
+
+        
+            <meta property="og:title" content="MIT 6.S081 | 0x07 Networking" />
+        
+    
+
+    
+        
+            <meta property="og:description" content="我又回来了！这次争取一鼓作气更完这个系列！" />
+        
+    
+
+    
+        
+            <meta name="description" content="我又回来了！这次争取一鼓作气更完这个系列！" />
+        
+    
+
+    
+         <link rel="icon" type="image/png" href=&#x2F;icon&#x2F;favicon.png />
+    
+
+    
+
+    
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-6YGDB8SLBT"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', 'G-6YGDB8SLBT');
+        </script>
+    
+
+    
+    
+
+
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@1,500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Sans&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto+Mono" rel="stylesheet">
+
+    <link rel="stylesheet" type="text/css" media="screen" href=https://miaohn.github.io/main.css />
+
+    
+        <link
+            rel="stylesheet"
+            id="darkModeStyle"
+            type="text/css"
+            href=https://miaohn.github.io/dark.css
+            
+            
+        />
+    
+
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            renderMathInElement(document.body, {
+            // customised options
+            // • auto-render specific keys, e.g.:
+            delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false},
+                {left: '\\(', right: '\\)', display: false},
+                {left: '\\[', right: '\\]', display: true}
+            ],
+            // • rendering keys, e.g.:
+            throwOnError : false
+            });
+        });
+    </script>
+    
+
+         
+		<link href="https://unpkg.com/highlightjs-badge/highlightjs/styles/railscasts.css" rel="stylesheet">
+		<!-- https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.1.1/build/styles/  for min version -->
+		<script src="https://unpkg.com/highlightjs-badge/highlightjs/highlight.pack.js"></script>
+		<script src="https://unpkg.com/highlightjs-badge/highlightjs-badge.min.js"></script>
+		<script>
+			var pres = document.querySelectorAll("pre>code");
+			for (var i = 0; i < pres.length; i++) {
+				hljs.highlightBlock(pres[i]);
+			}
+		</script>
+		
+			<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js"></script>
+			<script>
+				var options = {
+					copyIconClass: "gg-clipboard",
+					checkIconClass: "gg-check"
+				};
+				window.highlightJsBadge(options);
+			</script>
+		
+
+	
+
+
+    
+
+
+</head>
+
+
+<body>
+    <div class="content">
+        <header>
+    <div class="main" id="main_title">
+        <a href=https:&#x2F;&#x2F;miaohn.github.io>MiaoHN&#x27;s Blog</a>
+    </div>
+
+    <nav>
+        
+            <a href=&#x2F;posts>Posts</a>
+        
+            <a href=&#x2F;tags>Tags</a>
+        
+            <a href=&#x2F;about>About</a>
+        
+
+        
+
+        
+    </nav>
+</header>
+
+
+        
+    
+<main>
+    <article>
+        <div class="title">
+            <h1 class="title">MIT 6.S081 | 0x07 Networking</h1>
+            <div class="meta">
+                 2024-07-01
+
+                
+            </div>
+        </div>
+
+        
+
+        <section class="body">
+            <ul>
+<li>链接：<a href="https://pdos.csail.mit.edu/6.S081/2021/labs/net.html">https://pdos.csail.mit.edu/6.S081/2021/labs/net.html</a></li>
+<li>难度：🟥</li>
+</ul>
+<p>首先想解~~jiao~~释~~bian~~一下，为什么拖了这么久：文档太多，没看进去 😂，拖着拖着就彻底忘了。我经过深刻反思，认为这是一个很不好的习惯，所以我又来了，抓紧更新，争取把这个系列收尾。</p>
+<div class="callout callout-info">
+  <p>Your job is to complete <code>e1000_transmit()</code> and <code>e1000_recv()</code>, both in <code>kernel/e1000.c</code>, so that the driver can transmit and receive packets. You are done when make grade says your solution passes all the tests.</p>
+
+</div>
+<p>这个部分让我们实现网络设备 E1000 的发送和接收功能，主要就是完成 <code>e1000_transmit()</code> 和 <code>e1000_recv()</code> 这两个函数。初看的时候没什么头绪，参考的那个文件长的不得了，磨了几天就忘掉了。现在看到实验的 Hints 部分原来把收发过程写的很清楚，我就照着这个提示写了，主要需要理解的就是这个环形缓冲区的使用。</p>
+<h2 id="ti-shi">提示</h2>
+<p>首先，在<code>e1000_transmit()</code>和<code>e1000_recv()</code>中添加打印语句，并运行<code>make server</code>以及在xv6中执行<code>nettests</code>。你应该能从打印语句中看到<code>nettests</code>触发了对<code>e1000_transmit</code>的调用。</p>
+<p>实现<code>e1000_transmit()</code>的一些提示：</p>
+<ol>
+<li>首先，通过读取<code>E1000_TDT</code>控制寄存器，询问E1000下一个数据包期望的发送环索引。</li>
+<li>然后检查环是否溢出。如果<code>E1000_TXD_STAT_DD</code>位在由<code>E1000_TDT</code>索引的描述符中未设置，表示E1000尚未完成相应的前一个传输请求，此时应返回错误。</li>
+<li>否则，使用<code>mbuffree()</code>释放该描述符上一次发送的mbuf（如果有的话）。</li>
+<li>接着填充描述符。<code>m-&gt;head</code>指向内存中数据包的内容，<code>m-&gt;len</code>是数据包长度。设置必要的cmd标志（参考E1000手册的3.3节），并保留一个指向mbuf的指针以便稍后释放。</li>
+<li>最后，通过对<code>E1000_TDT</code>加一并取模<code>TX_RING_SIZE</code>来更新环的位置。</li>
+<li>如果<code>e1000_transmit()</code>成功地将mbuf添加到环中，则返回0。如果失败（例如，没有可用的描述符来传输mbuf），返回-1，让调用者知道需要释放mbuf。</li>
+</ol>
+<p>实现<code>e1000_recv()</code>的一些提示：</p>
+<ol>
+<li>首先，通过获取<code>E1000_RDT</code>控制寄存器并对其加一取模<code>RX_RING_SIZE</code>，询问E1000下一个等待接收的数据包（如果有）所在环索引。</li>
+<li>然后，通过检查描述符状态部分中的<code>E1000_RXD_STAT_DD</code>位来判断是否有新数据包可用。如果没有，停止处理。</li>
+<li>否则，根据描述符中的长度报告更新mbuf的<code>m-&gt;len</code>。使用<code>net_rx()</code>将mbuf传递给网络栈。</li>
+<li>然后，使用<code>mbufalloc()</code>分配一个新的mbuf以替换刚刚给<code>net_rx()</code>的那个。将其数据指针（<code>m-&gt;head</code>）编程到描述符中，并清零描述符的状态位。</li>
+<li>最后，更新<code>E1000_RDT</code>寄存器为最后处理的环描述符的索引。</li>
+</ol>
+<p><code>e1000_init()</code>使用mbufs初始化RX环，你可能需要查看它是如何做到的，并可能借鉴其中的代码。</p>
+<p>总有一天到达的数据包总数将超过环的大小（16个）；确保你的代码能够处理这种情况。</p>
+<p>你将需要锁机制来应对xv6可能从多个进程使用E1000，或在中断到达时正在内核线程中使用E1000的可能性。</p>
+<h2 id="dai-ma">代码</h2>
+<pre data-lang="diff" style="background-color:#282c34;color:#dcdfe4;" class="language-diff "><code class="language-diff" data-lang="diff"><span>diff --git a/kernel/e1000.c b/kernel/e1000.c
+</span><span>index 70a2adf..0414749 100644
+</span><span>--- a/kernel/e1000.c
+</span><span>+++ b/kernel/e1000.c
+</span><span>@@ -102,7 +102,30 @@ </span><span style="color:#61afef;">e1000_transmit(struct mbuf *m)
+</span><span>   // the TX descriptor ring so that the e1000 sends it. Stash
+</span><span>   // a pointer so that it can be freed after sending.
+</span><span>   //
+</span><span style="color:#e06c75;">-  
+</span><span style="color:#98c379;">+  acquire(&amp;e1000_lock);
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  uint32 idx = regs[E1000_TDT];
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  if (!(tx_ring[idx].status &amp; E1000_TXD_STAT_DD)) {
+</span><span style="color:#98c379;">+    release(&amp;e1000_lock);
+</span><span style="color:#98c379;">+    return -1;
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  if (tx_mbufs[idx]) {
+</span><span style="color:#98c379;">+    mbuffree(tx_mbufs[idx]);
+</span><span style="color:#98c379;">+    tx_mbufs[idx] = 0;
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  tx_ring[idx].addr = (uint64)m-&gt;head;
+</span><span style="color:#98c379;">+  tx_ring[idx].length = m-&gt;len;
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  tx_ring[idx].cmd = E1000_TXD_CMD_EOP | E1000_TXD_CMD_RS;
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  tx_mbufs[idx] = m;
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  regs[E1000_TDT] = (regs[E1000_TDT] + 1) % TX_RING_SIZE;
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  release(&amp;e1000_lock);
+</span><span>   return 0;
+</span><span> }
+</span><span> 
+</span><span>@@ -115,6 +138,23 @@ </span><span style="color:#61afef;">e1000_recv(void)
+</span><span>   // Check for packets that have arrived from the e1000
+</span><span>   // Create and deliver an mbuf for each packet (using net_rx()).
+</span><span>   //
+</span><span style="color:#98c379;">+  while (1) {
+</span><span style="color:#98c379;">+    uint32 tail = (regs[E1000_RDT] + 1) % RX_RING_SIZE;
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+    if (!(rx_ring[tail].status &amp; E1000_TXD_STAT_DD)) {
+</span><span style="color:#98c379;">+      break;
+</span><span style="color:#98c379;">+    }
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+    rx_mbufs[tail]-&gt;len = rx_ring[tail].length;
+</span><span style="color:#98c379;">+    net_rx(rx_mbufs[tail]);
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+    rx_mbufs[tail] = mbufalloc(0);
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+    rx_ring[tail].addr = (uint64)rx_mbufs[tail]-&gt;head;
+</span><span style="color:#98c379;">+    rx_ring[tail].status = 0;
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+    regs[E1000_RDT] = tail;
+</span><span style="color:#98c379;">+  }
+</span><span> }
+</span></code></pre>
+<h2 id="ping-ce">评测</h2>
+<p>在进行 <code>make grade</code> 的时候有个测试 <code>nettest: DNS</code> 没有通过。看了一下测试代码，它要求的 IP 是 128.52.129.126，但我实际拿到的 IP 是 198.18.0.51，看了一下这两个地址其实是一个网站。这么来看，我的代码应该是没问题的，只是因为测试代码没有更新 IP 地址吧。</p>
+
+        </section>
+
+        
+            <div class="post-tags">
+                <nav class="nav tags">
+                    <ul class="tags">
+                        
+                            <li><a href=https://miaohn.github.io/tags/labs/>labs</a></li>
+                        
+                    </ul>
+                </nav>
+            </div>
+        
+
+    </article>
+
+    
+</main>
+
+
+
+        <footer>
+  <div class="footer-info">
+    2024 © MiaoHN
+  </div>
+</footer>
+    </div>
+</body>
+
+</html>

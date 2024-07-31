@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+
+    
+        <title>
+             MIT 6.S081 | 0x0a Mmap
+            
+        </title>
+
+        
+            <meta property="og:title" content="MIT 6.S081 | 0x0a Mmap" />
+        
+    
+
+    
+        
+            <meta property="og:description" content="终于来到了最后一个 Lab！但是有点做不动了 :joy:" />
+        
+    
+
+    
+        
+            <meta name="description" content="终于来到了最后一个 Lab！但是有点做不动了 :joy:" />
+        
+    
+
+    
+         <link rel="icon" type="image/png" href=&#x2F;icon&#x2F;favicon.png />
+    
+
+    
+
+    
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-6YGDB8SLBT"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', 'G-6YGDB8SLBT');
+        </script>
+    
+
+    
+    
+
+
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@1,500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Sans&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto+Mono" rel="stylesheet">
+
+    <link rel="stylesheet" type="text/css" media="screen" href=https://miaohn.github.io/main.css />
+
+    
+        <link
+            rel="stylesheet"
+            id="darkModeStyle"
+            type="text/css"
+            href=https://miaohn.github.io/dark.css
+            
+            
+        />
+    
+
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            renderMathInElement(document.body, {
+            // customised options
+            // • auto-render specific keys, e.g.:
+            delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false},
+                {left: '\\(', right: '\\)', display: false},
+                {left: '\\[', right: '\\]', display: true}
+            ],
+            // • rendering keys, e.g.:
+            throwOnError : false
+            });
+        });
+    </script>
+    
+
+         
+		<link href="https://unpkg.com/highlightjs-badge/highlightjs/styles/railscasts.css" rel="stylesheet">
+		<!-- https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.1.1/build/styles/  for min version -->
+		<script src="https://unpkg.com/highlightjs-badge/highlightjs/highlight.pack.js"></script>
+		<script src="https://unpkg.com/highlightjs-badge/highlightjs-badge.min.js"></script>
+		<script>
+			var pres = document.querySelectorAll("pre>code");
+			for (var i = 0; i < pres.length; i++) {
+				hljs.highlightBlock(pres[i]);
+			}
+		</script>
+		
+			<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js"></script>
+			<script>
+				var options = {
+					copyIconClass: "gg-clipboard",
+					checkIconClass: "gg-check"
+				};
+				window.highlightJsBadge(options);
+			</script>
+		
+
+	
+
+
+    
+
+
+</head>
+
+
+<body>
+    <div class="content">
+        <header>
+    <div class="main" id="main_title">
+        <a href=https:&#x2F;&#x2F;miaohn.github.io>MiaoHN&#x27;s Blog</a>
+    </div>
+
+    <nav>
+        
+            <a href=&#x2F;posts>Posts</a>
+        
+            <a href=&#x2F;tags>Tags</a>
+        
+            <a href=&#x2F;about>About</a>
+        
+
+        
+
+        
+    </nav>
+</header>
+
+
+        
+    
+<main>
+    <article>
+        <div class="title">
+            <h1 class="title">MIT 6.S081 | 0x0a Mmap</h1>
+            <div class="meta">
+                 2024-07-06
+
+                
+            </div>
+        </div>
+
+        
+
+        <section class="body">
+            <ul>
+<li>链接：<a href="https://pdos.csail.mit.edu/6.S081/2021/labs/mmap.html">https://pdos.csail.mit.edu/6.S081/2021/labs/mmap.html</a></li>
+<li>难度：🟥</li>
+</ul>
+<div class="callout callout-tip">
+  <p>You should implement enough <code>mmap</code> and <code>munmap</code> functionality to make the <code>mmaptest</code> test program work. If <code>mmaptest</code> doesn't use a <code>mmap</code> feature, you don't need to implement that feature.</p>
+
+</div><div class="callout callout-info">
+  <p>本节实验严重参考了 <a href="https://blog.miigon.net/posts/s081-lab10-mmap/">Millgon's blog</a> 的做法</p>
+
+</div><h2 id="fen-xi">分析</h2>
+<p>之前都没怎么接触过这俩函数，于是问了下通义千问。</p>
+<h3 id="han-shu-jie-shi">函数解释</h3>
+<p><code>mmap()</code> 和 <code>munmap()</code> 是在Unix和类Unix操作系统（如Linux）中用于内存映射的系统调用。这些函数允许用户空间程序直接访问内核管理的内存或文件，提供了一种高效的数据访问机制。</p>
+<h4 id="mmap">mmap()</h4>
+<p><code>mmap()</code> 函数的主要作用是将一个文件或其它对象映射到进程的地址空间中，这样文件的内容就可以像访问普通内存一样进行读写。当一个文件被映射后，对映射区域的任何修改都会反映到原始文件上，除非使用了某种特殊的映射标志来改变这种行为。</p>
+<p><code>mmap()</code> 的基本原型如下：</p>
+<pre data-lang="c" style="background-color:#282c34;color:#dcdfe4;" class="language-c "><code class="language-c" data-lang="c"><span style="color:#c678dd;">#include </span><span style="color:#98c379;">&lt;sys/mman.h&gt;
+</span><span style="color:#c678dd;">void *</span><span style="color:#61afef;">mmap</span><span>(</span><span style="color:#c678dd;">void *</span><span style="color:#e06c75;">addr</span><span>, size_t </span><span style="color:#e06c75;">length</span><span>, </span><span style="color:#c678dd;">int </span><span style="color:#e06c75;">prot</span><span>, </span><span style="color:#c678dd;">int </span><span style="color:#e06c75;">flags</span><span>, </span><span style="color:#c678dd;">int </span><span style="color:#e06c75;">fd</span><span>, off_t </span><span style="color:#e06c75;">offset</span><span>);
+</span></code></pre>
+<p>参数解释：</p>
+<ul>
+<li><code>addr</code>：建议的映射起始地址，通常设为<code>NULL</code>让内核选择合适的地址。</li>
+<li><code>length</code>：要映射的字节数。</li>
+<li><code>prot</code>：页面保护标志，指定映射区域的权限，例如读、写等。</li>
+<li><code>flags</code>：映射类型和特殊标志，例如<code>MAP_SHARED</code>（共享映射）或<code>MAP_PRIVATE</code>（私有拷贝映射）。</li>
+<li><code>fd</code>：文件描述符，通常是通过<code>open()</code>打开的文件。</li>
+<li><code>offset</code>：文件的偏移量，映射的起点位置。</li>
+</ul>
+<h4 id="munmap">munmap()</h4>
+<p><code>munmap()</code> 函数的作用是取消之前通过<code>mmap()</code>创建的内存映射。一旦调用<code>munmap()</code>，对原来映射区域的访问将不再有效，且对该区域的任何引用都会导致段错误（Segmentation fault）。</p>
+<p><code>munmap()</code> 的基本原型如下：</p>
+<pre data-lang="c" style="background-color:#282c34;color:#dcdfe4;" class="language-c "><code class="language-c" data-lang="c"><span style="color:#c678dd;">#include </span><span style="color:#98c379;">&lt;sys/mman.h&gt;
+</span><span style="color:#c678dd;">int </span><span style="color:#61afef;">munmap</span><span>(</span><span style="color:#c678dd;">void *</span><span style="color:#e06c75;">addr</span><span>, size_t </span><span style="color:#e06c75;">length</span><span>);
+</span></code></pre>
+<p>参数解释：</p>
+<ul>
+<li><code>addr</code>：映射区域的起始地址，这是<code>mmap()</code>返回的地址。</li>
+<li><code>length</code>：映射区域的长度，与<code>mmap()</code>中的<code>length</code>相同。</li>
+</ul>
+<p>这两个函数提供了非常强大的功能，可以用于实现高效的文件I/O、进程间的共享内存通信以及动态链接库的加载等场景。然而，由于它们直接操作内核资源，因此在使用时需要特别小心，确保正确的地址和长度被传递给函数，避免内存泄漏或其他潜在的错误。</p>
+<h3 id="shi-xian-si-lu">实现思路</h3>
+<p><img src="https://cdn.jsdelivr.net/gh/MiaoHN/image-host@master/images/20240706164201.png" alt="proc space" />
+<em><a href="https://blog.miigon.net/posts/s081-lab10-mmap/">图源</a></em></p>
+<p><code>mmap()</code> 是将一个文件映射到进程的地址空间，看一下进程在内存中的布局，这个映射的起始地址可以选为 <code>TRAPEFRAME</code> 之前的空闲区域。内存的映射和懒加载有点像 COW 那节实验做的事，<code>mmap()</code> 时只需要记录一下映射的信息，然后在缺页异常时再去加载文件内容。进程数据也需要记录一下这个映射信息，方便后续的各种操作。总结一下，需要做以下几个事情：</p>
+<ul>
+<li><code>mmap()</code>：在<code>proc</code>结构体中增加一个<code>vma</code>数组，用于存储虚拟内存区域的信息。在<code>sysfile.c</code>中实现<code>sys_mmap()</code>函数，用于处理<code>mmap()</code>系统调用。在<code>trap.c</code>中处理缺页异常，实现懒加载。</li>
+<li><code>munmap()</code>：在<code>sysfile.c</code>中实现<code>sys_munmap()</code>函数，用于处理<code>munmap()</code>系统调用。</li>
+<li>在 <code>allocproc()</code> 和 <code>freeproc()</code> 中初始化和释放 <code>vma</code>。在 <code>fork()</code> 中复制 <code>vma</code>。</li>
+</ul>
+<h2 id="dai-ma">代码</h2>
+<pre data-lang="diff" style="background-color:#282c34;color:#dcdfe4;" class="language-diff "><code class="language-diff" data-lang="diff"><span>diff --git a/Makefile b/Makefile
+</span><span>index 9b83591..5f6af9c 100644
+</span><span>--- a/Makefile
+</span><span>+++ b/Makefile
+</span><span>@@ -188,6 +188,7 @@ </span><span style="color:#61afef;">UPROGS=\
+</span><span>   $U/_grind\
+</span><span>   $U/_wc\
+</span><span>   $U/_zombie\
+</span><span style="color:#98c379;">+  $U/_mmaptest\
+</span><span> 
+</span><span> 
+</span><span> 
+</span><span>diff --git a/kernel/defs.h b/kernel/defs.h
+</span><span>index a3c962b..14605aa 100644
+</span><span>--- a/kernel/defs.h
+</span><span>+++ b/kernel/defs.h
+</span><span>@@ -8,6 +8,7 @@ </span><span style="color:#61afef;">struct spinlock;
+</span><span> struct sleeplock;
+</span><span> struct stat;
+</span><span> struct superblock;
+</span><span style="color:#98c379;">+struct vma;
+</span><span> 
+</span><span> // bio.c
+</span><span> void            binit(void);
+</span><span>@@ -141,6 +142,10 @@ </span><span style="color:#61afef;">int             fetchstr(uint64, char*, int);
+</span><span> int             fetchaddr(uint64, uint64*);
+</span><span> void            syscall();
+</span><span> 
+</span><span style="color:#98c379;">+// sysfile.c
+</span><span style="color:#98c379;">+int             vmatryalloc(uint64 va);
+</span><span style="color:#98c379;">+void            vmaunmap(pagetable_t pagetable, uint64 va, uint64 sz, struct vma *v);
+</span><span style="color:#98c379;">+
+</span><span> // trap.c
+</span><span> extern uint     ticks;
+</span><span> void            trapinit(void);
+</span><span>diff --git a/kernel/memlayout.h b/kernel/memlayout.h
+</span><span>index 776f98c..61c030c 100644
+</span><span>--- a/kernel/memlayout.h
+</span><span>+++ b/kernel/memlayout.h
+</span><span>@@ -65,3 +65,6 @@
+</span><span> //   TRAPFRAME (p-&gt;trapframe, used by the trampoline)
+</span><span> //   TRAMPOLINE (the same page as in the kernel)
+</span><span> #define TRAPFRAME (TRAMPOLINE - PGSIZE)
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+// Used for virtual memory areas
+</span><span style="color:#98c379;">+#define VMAEND TRAPFRAME
+</span><span>diff --git a/kernel/param.h b/kernel/param.h
+</span><span>index 6624bff..3b99e82 100644
+</span><span>--- a/kernel/param.h
+</span><span>+++ b/kernel/param.h
+</span><span>@@ -1,5 +1,6 @@
+</span><span> #define NPROC        64  // maximum number of processes
+</span><span> #define NCPU          8  // maximum number of CPUs
+</span><span style="color:#98c379;">+#define NVMA         16  // maximum number of virtual memory areas
+</span><span> #define NOFILE       16  // open files per process
+</span><span> #define NFILE       100  // open files per system
+</span><span> #define NINODE       50  // maximum number of active i-nodes
+</span><span>diff --git a/kernel/proc.c b/kernel/proc.c
+</span><span>index 959b778..efd03c7 100644
+</span><span>--- a/kernel/proc.c
+</span><span>+++ b/kernel/proc.c
+</span><span>@@ -146,6 +146,10 @@ </span><span style="color:#61afef;">found:
+</span><span>   p-&gt;context.ra = (uint64)forkret;
+</span><span>   p-&gt;context.sp = p-&gt;kstack + PGSIZE;
+</span><span> 
+</span><span style="color:#98c379;">+  for (int i = 0; i &lt; NVMA; i++) {
+</span><span style="color:#98c379;">+    p-&gt;vma[i].valid = 0;
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+
+</span><span>   return p;
+</span><span> }
+</span><span> 
+</span><span>@@ -158,6 +162,10 @@ </span><span style="color:#61afef;">freeproc(struct proc *p)
+</span><span>   if(p-&gt;trapframe)
+</span><span>     kfree((void*)p-&gt;trapframe);
+</span><span>   p-&gt;trapframe = 0;
+</span><span style="color:#98c379;">+  for (int i = 0; i &lt; NVMA; i++) {
+</span><span style="color:#98c379;">+    struct vma *v = &amp;p-&gt;vma[i];
+</span><span style="color:#98c379;">+    vmaunmap(p-&gt;pagetable, v-&gt;addr, v-&gt;sz, v);
+</span><span style="color:#98c379;">+  }
+</span><span>   if(p-&gt;pagetable)
+</span><span>     proc_freepagetable(p-&gt;pagetable, p-&gt;sz);
+</span><span>   p-&gt;pagetable = 0;
+</span><span>@@ -308,6 +316,14 @@ </span><span style="color:#61afef;">fork(void)
+</span><span>       np-&gt;ofile[i] = filedup(p-&gt;ofile[i]);
+</span><span>   np-&gt;cwd = idup(p-&gt;cwd);
+</span><span> 
+</span><span style="color:#98c379;">+  for (i = 0; i &lt; NVMA; i++) {
+</span><span style="color:#98c379;">+    struct vma *v = &amp;p-&gt;vma[i];
+</span><span style="color:#98c379;">+    if (v-&gt;valid) {
+</span><span style="color:#98c379;">+      np-&gt;vma[i] = *v;
+</span><span style="color:#98c379;">+      filedup(v-&gt;f);
+</span><span style="color:#98c379;">+    }
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+
+</span><span>   safestrcpy(np-&gt;name, p-&gt;name, sizeof(p-&gt;name));
+</span><span> 
+</span><span>   pid = np-&gt;pid;
+</span><span>diff --git a/kernel/proc.h b/kernel/proc.h
+</span><span>index d021857..e1ff755 100644
+</span><span>--- a/kernel/proc.h
+</span><span>+++ b/kernel/proc.h
+</span><span>@@ -79,6 +79,18 @@ </span><span style="color:#61afef;">struct trapframe {
+</span><span>   /* 280 */ uint64 t6;
+</span><span> };
+</span><span> 
+</span><span style="color:#98c379;">+// Virtual memory areas
+</span><span style="color:#98c379;">+struct vma {
+</span><span style="color:#98c379;">+  int valid;
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  uint64 addr;
+</span><span style="color:#98c379;">+  int sz;
+</span><span style="color:#98c379;">+  struct file *f;
+</span><span style="color:#98c379;">+  int prot;
+</span><span style="color:#98c379;">+  int flags;
+</span><span style="color:#98c379;">+  int offset;
+</span><span style="color:#98c379;">+};
+</span><span style="color:#98c379;">+
+</span><span> enum procstate { UNUSED, USED, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
+</span><span> 
+</span><span> // Per-process state
+</span><span>@@ -104,4 +116,5 @@ </span><span style="color:#61afef;">struct proc {
+</span><span>   struct file *ofile[NOFILE];  // Open files
+</span><span>   struct inode *cwd;           // Current directory
+</span><span>   char name[16];               // Process name (debugging)
+</span><span style="color:#98c379;">+  struct vma vma[NVMA];        // Virual memory areas
+</span><span> };
+</span><span>diff --git a/kernel/riscv.h b/kernel/riscv.h
+</span><span>index 20a01db..3b14dca 100644
+</span><span>--- a/kernel/riscv.h
+</span><span>+++ b/kernel/riscv.h
+</span><span>@@ -343,6 +343,9 @@ </span><span style="color:#61afef;">typedef uint64 *pagetable_t; // 512 PTEs
+</span><span> #define PTE_W (1L &lt;&lt; 2)
+</span><span> #define PTE_X (1L &lt;&lt; 3)
+</span><span> #define PTE_U (1L &lt;&lt; 4) // user can access
+</span><span style="color:#98c379;">+#define PTE_G (1L &lt;&lt; 5) // global mapping
+</span><span style="color:#98c379;">+#define PTE_A (1L &lt;&lt; 6) // accessed
+</span><span style="color:#98c379;">+#define PTE_D (1L &lt;&lt; 7) // dirty
+</span><span> 
+</span><span> // shift a physical address to the right place for a PTE.
+</span><span> #define PA2PTE(pa) ((((uint64)pa) &gt;&gt; 12) &lt;&lt; 10)
+</span><span>diff --git a/kernel/syscall.c b/kernel/syscall.c
+</span><span>index ed65409..4fb9baa 100644
+</span><span>--- a/kernel/syscall.c
+</span><span>+++ b/kernel/syscall.c
+</span><span>@@ -101,6 +101,8 @@ </span><span style="color:#61afef;">extern uint64 sys_unlink(void);
+</span><span> extern uint64 sys_link(void);
+</span><span> extern uint64 sys_mkdir(void);
+</span><span> extern uint64 sys_close(void);
+</span><span style="color:#98c379;">+extern uint64 sys_mmap(void);
+</span><span style="color:#98c379;">+extern uint64 sys_munmap(void);
+</span><span> 
+</span><span> // An array mapping syscall numbers from syscall.h
+</span><span> // to the function that handles the system call.
+</span><span>@@ -126,6 +128,8 @@ </span><span style="color:#61afef;">static uint64 (*syscalls[])(void) = {
+</span><span> [SYS_link]    sys_link,
+</span><span> [SYS_mkdir]   sys_mkdir,
+</span><span> [SYS_close]   sys_close,
+</span><span style="color:#98c379;">+[SYS_mmap]    sys_mmap,
+</span><span style="color:#98c379;">+[SYS_munmap]  sys_munmap,
+</span><span> };
+</span><span> 
+</span><span> void
+</span><span>diff --git a/kernel/syscall.h b/kernel/syscall.h
+</span><span>index bc5f356..e7b18d6 100644
+</span><span>--- a/kernel/syscall.h
+</span><span>+++ b/kernel/syscall.h
+</span><span>@@ -20,3 +20,5 @@
+</span><span> #define SYS_link   19
+</span><span> #define SYS_mkdir  20
+</span><span> #define SYS_close  21
+</span><span style="color:#98c379;">+#define SYS_mmap   22
+</span><span style="color:#98c379;">+#define SYS_munmap 23
+</span><span>diff --git a/kernel/sysfile.c b/kernel/sysfile.c
+</span><span>index 16b668c..849bdd2 100644
+</span><span>--- a/kernel/sysfile.c
+</span><span>+++ b/kernel/sysfile.c
+</span><span>@@ -15,6 +15,7 @@
+</span><span> #include &quot;sleeplock.h&quot;
+</span><span> #include &quot;file.h&quot;
+</span><span> #include &quot;fcntl.h&quot;
+</span><span style="color:#98c379;">+#include &quot;memlayout.h&quot;
+</span><span> 
+</span><span> // Fetch the nth word-sized system call argument as a file descriptor
+</span><span> // and return both the descriptor and the corresponding struct file.
+</span><span>@@ -503,3 +504,180 @@ </span><span style="color:#61afef;">sys_pipe(void)
+</span><span>   }
+</span><span>   return 0;
+</span><span> }
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+uint64
+</span><span style="color:#98c379;">+sys_mmap(void)
+</span><span style="color:#98c379;">+{
+</span><span style="color:#98c379;">+  uint64 addr;
+</span><span style="color:#98c379;">+  int sz, prot, flags, fd, offset;
+</span><span style="color:#98c379;">+  struct file *f;
+</span><span style="color:#98c379;">+  struct proc *p = myproc();
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  argaddr(0, &amp;addr);
+</span><span style="color:#98c379;">+  argint(1, &amp;sz);
+</span><span style="color:#98c379;">+  argint(2, &amp;prot);
+</span><span style="color:#98c379;">+  argint(3, &amp;flags);
+</span><span style="color:#98c379;">+  if (argfd(4, &amp;fd, &amp;f) &lt; 0)
+</span><span style="color:#98c379;">+    return -1;
+</span><span style="color:#98c379;">+  argint(5, &amp;offset);
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  if ((!f-&gt;readable &amp;&amp; (prot &amp; PROT_READ)) || (!f-&gt;writable &amp;&amp; (prot &amp; PROT_WRITE) &amp;&amp; !(flags &amp; MAP_PRIVATE)))
+</span><span style="color:#98c379;">+    return -1;
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  sz = PGROUNDUP(sz);
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  struct vma* v = 0;
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  uint64 vmaend = VMAEND;
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  for (int i = 0; i &lt; NVMA; i++) {
+</span><span style="color:#98c379;">+    if (!p-&gt;vma[i].valid) {
+</span><span style="color:#98c379;">+      v = &amp;p-&gt;vma[i];
+</span><span style="color:#98c379;">+      v-&gt;valid = 1;
+</span><span style="color:#98c379;">+      break;
+</span><span style="color:#98c379;">+    }
+</span><span style="color:#98c379;">+    if (p-&gt;vma[i].addr &lt; vmaend) {
+</span><span style="color:#98c379;">+      vmaend = PGROUNDDOWN(p-&gt;vma[i].addr);
+</span><span style="color:#98c379;">+    }
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  if (v == 0)
+</span><span style="color:#98c379;">+    panic(&quot;mmap: no free space.&quot;);
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  v-&gt;addr = vmaend - sz;
+</span><span style="color:#98c379;">+  v-&gt;sz = sz;
+</span><span style="color:#98c379;">+  v-&gt;prot = prot;
+</span><span style="color:#98c379;">+  v-&gt;flags = flags;
+</span><span style="color:#98c379;">+  v-&gt;f = f;
+</span><span style="color:#98c379;">+  v-&gt;offset = offset;
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  filedup(f);
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  return v-&gt;addr;
+</span><span style="color:#98c379;">+}
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+uint64
+</span><span style="color:#98c379;">+sys_munmap(void)
+</span><span style="color:#98c379;">+{
+</span><span style="color:#98c379;">+  uint64 addr;
+</span><span style="color:#98c379;">+  int sz;
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  argaddr(0, &amp;addr);
+</span><span style="color:#98c379;">+  argint(1, &amp;sz);
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  struct proc *p = myproc();
+</span><span style="color:#98c379;">+  struct vma *v = 0;
+</span><span style="color:#98c379;">+  for (int i = 0; i &lt; NVMA; i++) {
+</span><span style="color:#98c379;">+    if (p-&gt;vma[i].valid &amp;&amp; p-&gt;vma[i].addr &lt;= addr &amp;&amp; addr &lt; p-&gt;vma[i].addr + p-&gt;vma[i].sz) {
+</span><span style="color:#98c379;">+      v = &amp;p-&gt;vma[i];
+</span><span style="color:#98c379;">+      break;
+</span><span style="color:#98c379;">+    }
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  if (v == 0) {
+</span><span style="color:#98c379;">+    return -1;
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  if (addr &gt; v-&gt;addr &amp;&amp; addr + sz &lt; v-&gt;addr + v-&gt;sz) {
+</span><span style="color:#98c379;">+    return -1;
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  uint64 aaddr = addr;
+</span><span style="color:#98c379;">+  if (addr &gt; v-&gt;addr) {
+</span><span style="color:#98c379;">+    aaddr = PGROUNDUP(addr);
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  int nbytes = sz - (aaddr - addr); // bytes to unmap
+</span><span style="color:#98c379;">+  if (nbytes &lt; 0) {
+</span><span style="color:#98c379;">+    nbytes = 0;
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  vmaunmap(p-&gt;pagetable, aaddr, nbytes, v);
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  if (addr &lt;= v-&gt;addr &amp;&amp; addr + sz &gt; v-&gt;addr) {
+</span><span style="color:#98c379;">+    v-&gt;offset += addr + sz - v-&gt;addr;
+</span><span style="color:#98c379;">+    v-&gt;addr = addr + sz;
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+  v-&gt;sz -= sz;
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  if (v-&gt;sz &lt;= 0) {
+</span><span style="color:#98c379;">+    fileclose(v-&gt;f);
+</span><span style="color:#98c379;">+    v-&gt;valid = 0;
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  return 0;
+</span><span style="color:#98c379;">+}
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+int
+</span><span style="color:#98c379;">+vmatryalloc(uint64 va) {
+</span><span style="color:#98c379;">+  struct proc *p = myproc();
+</span><span style="color:#98c379;">+  struct vma *v = 0;
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  for (int i = 0; i &lt; NVMA; i++) {
+</span><span style="color:#98c379;">+    if (p-&gt;vma[i].valid &amp;&amp; p-&gt;vma[i].addr &lt;= va &amp;&amp; va &lt; p-&gt;vma[i].addr + p-&gt;vma[i].sz) {
+</span><span style="color:#98c379;">+      v = &amp;p-&gt;vma[i];
+</span><span style="color:#98c379;">+      break;
+</span><span style="color:#98c379;">+    }
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  if (v == 0) {
+</span><span style="color:#98c379;">+    printf(&quot;vmatryalloc(): cannot find vma contain specific addr %p\n&quot;, va);
+</span><span style="color:#98c379;">+    return -1;
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  void *pa = kalloc();
+</span><span style="color:#98c379;">+  if (pa == 0)
+</span><span style="color:#98c379;">+    panic(&quot;vmatryalloc(): kalloc&quot;);
+</span><span style="color:#98c379;">+  memset(pa, 0, PGSIZE);
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  begin_op();
+</span><span style="color:#98c379;">+  ilock(v-&gt;f-&gt;ip);
+</span><span style="color:#98c379;">+  readi(v-&gt;f-&gt;ip, 0, (uint64)pa, v-&gt;offset + PGROUNDDOWN(va - v-&gt;addr), PGSIZE);
+</span><span style="color:#98c379;">+  iunlock(v-&gt;f-&gt;ip);
+</span><span style="color:#98c379;">+  end_op();
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  if (mappages(p-&gt;pagetable, va, PGSIZE, (uint64)pa, PTE_R | PTE_W | PTE_U) &lt; 0)
+</span><span style="color:#98c379;">+    panic(&quot;vmatryalloc(): mappages&quot;);
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  return 0;
+</span><span style="color:#98c379;">+}
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+void
+</span><span style="color:#98c379;">+vmaunmap(pagetable_t pagetable, uint64 va, uint64 nbytes, struct vma *v)
+</span><span style="color:#98c379;">+{
+</span><span style="color:#98c379;">+  uint64 a;
+</span><span style="color:#98c379;">+  pte_t *pte;
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  if((va % PGSIZE) != 0)
+</span><span style="color:#98c379;">+    panic(&quot;vmaunmap: not aligned&quot;);
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  for(a = va; a &lt; va + nbytes; a += PGSIZE){
+</span><span style="color:#98c379;">+    if((pte = walk(pagetable, a, 0)) == 0)
+</span><span style="color:#98c379;">+      continue;
+</span><span style="color:#98c379;">+    if(PTE_FLAGS(*pte) == PTE_V)
+</span><span style="color:#98c379;">+      panic(&quot;uvmunmap: not a leaf&quot;);
+</span><span style="color:#98c379;">+    if(*pte &amp; PTE_V) {
+</span><span style="color:#98c379;">+      uint64 pa = PTE2PA(*pte);
+</span><span style="color:#98c379;">+      if ((*pte &amp; PTE_D) &amp;&amp; (v-&gt;flags &amp; MAP_SHARED)) {
+</span><span style="color:#98c379;">+        begin_op();
+</span><span style="color:#98c379;">+        ilock(v-&gt;f-&gt;ip);
+</span><span style="color:#98c379;">+        uint64 off = a - v-&gt;addr;
+</span><span style="color:#98c379;">+        if (off &lt; 0) {
+</span><span style="color:#98c379;">+          // the first page is not full
+</span><span style="color:#98c379;">+          writei(v-&gt;f-&gt;ip, 0, pa + (-off), v-&gt;offset, PGSIZE + off);
+</span><span style="color:#98c379;">+        } else if (off + PGSIZE &gt; v-&gt;sz) {
+</span><span style="color:#98c379;">+          // the last page is not full
+</span><span style="color:#98c379;">+          writei(v-&gt;f-&gt;ip, 0, pa, v-&gt;offset + off, v-&gt;sz - off);
+</span><span style="color:#98c379;">+        } else {
+</span><span style="color:#98c379;">+          // full page
+</span><span style="color:#98c379;">+          writei(v-&gt;f-&gt;ip, 0, pa, v-&gt;offset + off, PGSIZE);
+</span><span style="color:#98c379;">+        }
+</span><span style="color:#98c379;">+        iunlock(v-&gt;f-&gt;ip);
+</span><span style="color:#98c379;">+        end_op();
+</span><span style="color:#98c379;">+      }
+</span><span style="color:#98c379;">+      kfree((void*)pa);
+</span><span style="color:#98c379;">+      *pte = 0;
+</span><span style="color:#98c379;">+    }
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+}
+</span><span>\ No newline at end of file
+</span><span>diff --git a/kernel/trap.c b/kernel/trap.c
+</span><span>index 512c850..263726e 100644
+</span><span>--- a/kernel/trap.c
+</span><span>+++ b/kernel/trap.c
+</span><span>@@ -67,6 +67,11 @@ </span><span style="color:#61afef;">usertrap(void)
+</span><span>     syscall();
+</span><span>   } else if((which_dev = devintr()) != 0){
+</span><span>     // ok
+</span><span style="color:#98c379;">+  } else if(r_scause() == 13 || r_scause() == 15) {
+</span><span style="color:#98c379;">+    if (vmatryalloc(r_stval()) != 0) {
+</span><span style="color:#98c379;">+      printf(&quot;usertrap(): vma lazy allocation error!\n&quot;);
+</span><span style="color:#98c379;">+      setkilled(p);
+</span><span style="color:#98c379;">+    }
+</span><span>   } else {
+</span><span>     printf(&quot;usertrap(): unexpected scause %p pid=%d\n&quot;, r_scause(), p-&gt;pid);
+</span><span>     printf(&quot;            sepc=%p stval=%p\n&quot;, r_sepc(), r_stval());
+</span><span>diff --git a/user/user.h b/user/user.h
+</span><span>index 4d398d5..eaf7e4e 100644
+</span><span>--- a/user/user.h
+</span><span>+++ b/user/user.h
+</span><span>@@ -22,6 +22,8 @@ </span><span style="color:#61afef;">int getpid(void);
+</span><span> char* sbrk(int);
+</span><span> int sleep(int);
+</span><span> int uptime(void);
+</span><span style="color:#98c379;">+void* mmap(const void*, int, int, int, int, int);
+</span><span style="color:#98c379;">+int munmap(const void*, int);
+</span><span> 
+</span><span> // ulib.c
+</span><span> int stat(const char*, struct stat*);
+</span><span>diff --git a/user/usys.pl b/user/usys.pl
+</span><span>index 01e426e..d23b9cc 100755
+</span><span>--- a/user/usys.pl
+</span><span>+++ b/user/usys.pl
+</span><span>@@ -36,3 +36,5 @@ </span><span style="color:#61afef;">entry(&quot;getpid&quot;);
+</span><span> entry(&quot;sbrk&quot;);
+</span><span> entry(&quot;sleep&quot;);
+</span><span> entry(&quot;uptime&quot;);
+</span><span style="color:#98c379;">+entry(&quot;mmap&quot;);
+</span><span style="color:#98c379;">+entry(&quot;munmap&quot;);
+</span></code></pre>
+
+        </section>
+
+        
+            <div class="post-tags">
+                <nav class="nav tags">
+                    <ul class="tags">
+                        
+                            <li><a href=https://miaohn.github.io/tags/labs/>labs</a></li>
+                        
+                    </ul>
+                </nav>
+            </div>
+        
+
+    </article>
+
+    
+</main>
+
+
+
+        <footer>
+  <div class="footer-info">
+    2024 © MiaoHN
+  </div>
+</footer>
+    </div>
+</body>
+
+</html>

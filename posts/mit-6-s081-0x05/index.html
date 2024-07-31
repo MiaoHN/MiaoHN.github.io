@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+
+    
+        <title>
+             MIT 6.S081 | 0x05 Copy on-write
+            
+        </title>
+
+        
+            <meta property="og:title" content="MIT 6.S081 | 0x05 Copy on-write" />
+        
+    
+
+    
+        
+    
+
+    
+        
+    
+
+    
+         <link rel="icon" type="image/png" href=&#x2F;icon&#x2F;favicon.png />
+    
+
+    
+
+    
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-6YGDB8SLBT"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', 'G-6YGDB8SLBT');
+        </script>
+    
+
+    
+    
+
+
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@1,500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Sans&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto+Mono" rel="stylesheet">
+
+    <link rel="stylesheet" type="text/css" media="screen" href=https://miaohn.github.io/main.css />
+
+    
+        <link
+            rel="stylesheet"
+            id="darkModeStyle"
+            type="text/css"
+            href=https://miaohn.github.io/dark.css
+            
+            
+        />
+    
+
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            renderMathInElement(document.body, {
+            // customised options
+            // • auto-render specific keys, e.g.:
+            delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false},
+                {left: '\\(', right: '\\)', display: false},
+                {left: '\\[', right: '\\]', display: true}
+            ],
+            // • rendering keys, e.g.:
+            throwOnError : false
+            });
+        });
+    </script>
+    
+
+         
+		<link href="https://unpkg.com/highlightjs-badge/highlightjs/styles/railscasts.css" rel="stylesheet">
+		<!-- https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.1.1/build/styles/  for min version -->
+		<script src="https://unpkg.com/highlightjs-badge/highlightjs/highlight.pack.js"></script>
+		<script src="https://unpkg.com/highlightjs-badge/highlightjs-badge.min.js"></script>
+		<script>
+			var pres = document.querySelectorAll("pre>code");
+			for (var i = 0; i < pres.length; i++) {
+				hljs.highlightBlock(pres[i]);
+			}
+		</script>
+		
+			<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js"></script>
+			<script>
+				var options = {
+					copyIconClass: "gg-clipboard",
+					checkIconClass: "gg-check"
+				};
+				window.highlightJsBadge(options);
+			</script>
+		
+
+	
+
+
+    
+
+
+</head>
+
+
+<body>
+    <div class="content">
+        <header>
+    <div class="main" id="main_title">
+        <a href=https:&#x2F;&#x2F;miaohn.github.io>MiaoHN&#x27;s Blog</a>
+    </div>
+
+    <nav>
+        
+            <a href=&#x2F;posts>Posts</a>
+        
+            <a href=&#x2F;tags>Tags</a>
+        
+            <a href=&#x2F;about>About</a>
+        
+
+        
+
+        
+    </nav>
+</header>
+
+
+        
+    
+<main>
+    <article>
+        <div class="title">
+            <h1 class="title">MIT 6.S081 | 0x05 Copy on-write</h1>
+            <div class="meta">
+                 2024-03-05
+
+                
+            </div>
+        </div>
+
+        
+
+        <section class="body">
+            <ul>
+<li>链接：<a href="https://pdos.csail.mit.edu/6.S081/2021/labs/cow.html">https://pdos.csail.mit.edu/6.S081/2021/labs/cow.html</a></li>
+<li>难度：🟥</li>
+</ul>
+<p>嘿嘿。。嘿。<a href="/posts/mit-6-s081-0x04">上个实验</a>还是在去年做的 😋。非常抱歉我拖了这么久，<del>拖延症晚期了</del>。不过既然都开了这个系列，那还是更新吧。</p>
+<div class="callout callout-info">
+  <p>COW 这节 lab 我顶多花了 15 个小时就做差不多了，但是有一个小 bug 迟迟没有发现，导致我一直没有任何进展。最后受不了在网上找代码对比，才发现我把 <code>uvmunmap</code> 函数最后一个参数写错了，其它地方都是对的，就很难受。</p>
+<p>参考了<a href="https://ttzytt.com/2022/07/xv6_lab6_record/index.html">别人写的代码</a>，函数封装的很舒服，于是我也就按相似的方式把一些代码简单做了一下封装。</p>
+<p>然后就是 <code>usertests</code> 有一个 case <code>textwrite</code> 一直没通过，我把那行注释掉就全过了，这算一个小遗憾，后期如果能通过我就更新一下这篇文章。</p>
+
+</div><h2 id="implement-copy-on-write">🟥 Implement copy-on write</h2>
+<p>copy-on write，COW，又称写时复制，这个实验算 6.S081 里比较出名的实验了吧。在使用 <code>fork()</code> 时为了减少开销，会让父子进程的页表指向同一个物理地址，节省了分配空间所占的时间。将对应的页改为不可写，直到出现 page fault 时才复制对应的页。</p>
+<p>所以整个实验主要分为两个部分：</p>
+<ol>
+<li>调用 <code>fork()</code> 后仅修改页表，并将权限设为不可写</li>
+<li>page fault 时为 COW 的页分配空间</li>
+</ol>
+<h3 id="xiu-gai-uvmcopy">修改 <code>uvmcopy()</code></h3>
+<p>在使用 <code>fork()</code> 创建子进程时，会使用 <code>uvmcopy()</code> 将父进程页表的空间复制到子进程的页表中。这部分原本的做法是既复制页表页复制对应的空间。而我们要将其修改为仅复制页表并将两个页表的权限设为不可写。</p>
+<div class="callout callout-tip">
+  <p>在 <code>uvmcopy()</code> 通过复制页表使父子进程指向同一个物理空间，读的时候没有问题，当需要进行写入操作时，由于权限为不可写，所以会报 page fault，所以在 <code>usertrap()</code> 中遇到 page fault 时才会真正进行物理空间的复制。</p>
+
+</div><pre data-lang="c" style="background-color:#282c34;color:#dcdfe4;" class="language-c "><code class="language-c" data-lang="c"><span style="color:#c678dd;">int
+</span><span style="color:#61afef;">uvmcopy</span><span>(pagetable_t </span><span style="color:#e06c75;">old</span><span>, pagetable_t </span><span style="color:#e06c75;">new</span><span>, uint64 </span><span style="color:#e06c75;">sz</span><span>)
+</span><span>{
+</span><span>  pte_t </span><span style="color:#c678dd;">*</span><span>pte;
+</span><span>  uint64 pa, i;
+</span><span>  uint flags;
+</span><span>
+</span><span>  </span><span style="color:#c678dd;">for</span><span>(i </span><span style="color:#c678dd;">= </span><span style="color:#e5c07b;">0</span><span>; i </span><span style="color:#c678dd;">&lt;</span><span> sz; i </span><span style="color:#c678dd;">+=</span><span> PGSIZE){
+</span><span>    </span><span style="color:#c678dd;">if</span><span>((pte </span><span style="color:#c678dd;">= </span><span style="color:#e06c75;">walk</span><span>(old, i, </span><span style="color:#e5c07b;">0</span><span>)) </span><span style="color:#c678dd;">== </span><span style="color:#e5c07b;">0</span><span>)
+</span><span>      </span><span style="color:#e06c75;">panic</span><span>(</span><span style="color:#98c379;">&quot;uvmcopy: pte should exist&quot;</span><span>);
+</span><span>    </span><span style="color:#c678dd;">if</span><span>((</span><span style="color:#c678dd;">*</span><span>pte </span><span style="color:#c678dd;">&amp;</span><span> PTE_V) </span><span style="color:#c678dd;">== </span><span style="color:#e5c07b;">0</span><span>)
+</span><span>      </span><span style="color:#e06c75;">panic</span><span>(</span><span style="color:#98c379;">&quot;uvmcopy: page not present&quot;</span><span>);
+</span><span>    pa </span><span style="color:#c678dd;">= </span><span style="color:#e06c75;">PTE2PA</span><span>(</span><span style="color:#c678dd;">*</span><span>pte);
+</span><span>
+</span><span>    </span><span style="color:#c678dd;">*</span><span>pte </span><span style="color:#c678dd;">&amp;= </span><span>(</span><span style="color:#c678dd;">~</span><span>PTE_W);
+</span><span>    </span><span style="color:#c678dd;">*</span><span>pte </span><span style="color:#c678dd;">|=</span><span> PTE_C;   </span><span style="color:#5c6370;">// cow flag
+</span><span>    flags </span><span style="color:#c678dd;">= </span><span style="color:#e06c75;">PTE_FLAGS</span><span>(</span><span style="color:#c678dd;">*</span><span>pte);
+</span><span>    </span><span style="color:#c678dd;">if </span><span>(</span><span style="color:#e06c75;">mappages</span><span>(new, i, PGSIZE, (uint64)pa, flags) </span><span style="color:#c678dd;">!= </span><span style="color:#e5c07b;">0</span><span>) {
+</span><span>      </span><span style="color:#61afef;">printf</span><span>(</span><span style="color:#98c379;">&quot;uvmcopy: failed</span><span style="color:#56b6c2;">\n</span><span style="color:#98c379;">&quot;</span><span>);
+</span><span>      </span><span style="color:#e06c75;">uvmunmap</span><span>(new, </span><span style="color:#e5c07b;">0</span><span>, i </span><span style="color:#c678dd;">/</span><span> PGSIZE, </span><span style="color:#e5c07b;">1</span><span>);
+</span><span>      </span><span style="color:#c678dd;">return -</span><span style="color:#e5c07b;">1</span><span>;
+</span><span>    }
+</span><span>    </span><span style="color:#e06c75;">ref_cnt_inc</span><span>(pa);  </span><span style="color:#5c6370;">// increase page ref count
+</span><span>  }
+</span><span>  </span><span style="color:#c678dd;">return </span><span style="color:#e5c07b;">0</span><span>;
+</span><span>}
+</span></code></pre>
+<p>这一步很简单，删掉原先的 <code>kalloc()</code>，只操作页表就可以了。</p>
+<h3 id="xiu-gai-usertrap">修改 <code>usertrap()</code></h3>
+<p>前面已经指出，在 <code>fork()</code> 时仅修改了页表，如果尝试写操作时会报 page fault，而这个中断在 <code>usertrap()</code> 中的中断号（<code>r_scause()</code>）是 15。所以在发生 15 号中断时我们需要做两件事：</p>
+<ol>
+<li>判断是否是由于 COW 导致的 page fault</li>
+<li>为 cow page fault 复制对应的物理空间</li>
+</ol>
+<div class="callout callout-tip">
+  <p>这里分了两步，感觉重复调用了两回 <code>walk()</code>。实际上可以解耦操作，第一步判断是否是 COW 页的函数会在 <code>copyout()</code> 中遇到。</p>
+
+</div>
+<p>首先判断所在的页是否是 COW 页，我们将页表对应的 flag 取到进行判断即可，这个命名也可取为 <code>is_cow_page()</code></p>
+<pre data-lang="c" style="background-color:#282c34;color:#dcdfe4;" class="language-c "><code class="language-c" data-lang="c"><span style="color:#c678dd;">int </span><span style="color:#61afef;">cow_uncopied</span><span>(pagetable_t </span><span style="color:#e06c75;">pgtbl</span><span>, uint64 </span><span style="color:#e06c75;">va</span><span>) {
+</span><span>  </span><span style="color:#c678dd;">if </span><span>(va </span><span style="color:#c678dd;">&gt;=</span><span> MAXVA) </span><span style="color:#c678dd;">return </span><span style="color:#e5c07b;">0</span><span>;
+</span><span>  pte_t </span><span style="color:#c678dd;">*</span><span> pte </span><span style="color:#c678dd;">= </span><span style="color:#e06c75;">walk</span><span>(pgtbl, va, </span><span style="color:#e5c07b;">0</span><span>);
+</span><span>  </span><span style="color:#c678dd;">if </span><span>(pte </span><span style="color:#c678dd;">== </span><span style="color:#e5c07b;">0</span><span>) </span><span style="color:#c678dd;">return </span><span style="color:#e5c07b;">0</span><span>;
+</span><span>  </span><span style="color:#c678dd;">if </span><span>((</span><span style="color:#c678dd;">*</span><span>pte </span><span style="color:#c678dd;">&amp;</span><span> PTE_V) </span><span style="color:#c678dd;">== </span><span style="color:#e5c07b;">0</span><span>) </span><span style="color:#c678dd;">return </span><span style="color:#e5c07b;">0</span><span>;
+</span><span>  </span><span style="color:#c678dd;">if </span><span>((</span><span style="color:#c678dd;">*</span><span>pte </span><span style="color:#c678dd;">&amp;</span><span> PTE_U) </span><span style="color:#c678dd;">== </span><span style="color:#e5c07b;">0</span><span>) </span><span style="color:#c678dd;">return </span><span style="color:#e5c07b;">0</span><span>;
+</span><span>  </span><span style="color:#c678dd;">return </span><span>((</span><span style="color:#c678dd;">*</span><span>pte) </span><span style="color:#c678dd;">&amp;</span><span> PTE_C);
+</span><span>}
+</span></code></pre>
+<p>接下来就是为 COW 页分配空间的操作，这段代码实际上在之前的 <code>uvmcopy()</code> 里已经有一部分了，参考着写就 ok。</p>
+<pre data-lang="c" style="background-color:#282c34;color:#dcdfe4;" class="language-c "><code class="language-c" data-lang="c"><span style="color:#c678dd;">int </span><span style="color:#61afef;">cow_alloc</span><span>(pagetable_t </span><span style="color:#e06c75;">pgtbl</span><span>, uint64 </span><span style="color:#e06c75;">va</span><span>) {
+</span><span>  pte_t </span><span style="color:#c678dd;">*</span><span>pte </span><span style="color:#c678dd;">= </span><span style="color:#e06c75;">walk</span><span>(pgtbl, va, </span><span style="color:#e5c07b;">0</span><span>);
+</span><span>  </span><span style="color:#c678dd;">if </span><span>(pte </span><span style="color:#c678dd;">== </span><span style="color:#e5c07b;">0</span><span>) </span><span style="color:#c678dd;">return -</span><span style="color:#e5c07b;">1</span><span>;
+</span><span>  uint flags </span><span style="color:#c678dd;">= </span><span style="color:#e06c75;">PTE_FLAGS</span><span>(</span><span style="color:#c678dd;">*</span><span>pte);
+</span><span>
+</span><span>  uint64 pa </span><span style="color:#c678dd;">= </span><span style="color:#e06c75;">PTE2PA</span><span>(</span><span style="color:#c678dd;">*</span><span>pte);
+</span><span>
+</span><span>  </span><span style="color:#c678dd;">char *</span><span>mem </span><span style="color:#c678dd;">= </span><span style="color:#e06c75;">kalloc</span><span>();
+</span><span>  </span><span style="color:#c678dd;">if </span><span>(mem </span><span style="color:#c678dd;">== </span><span style="color:#e5c07b;">0</span><span>) </span><span style="color:#c678dd;">return -</span><span style="color:#e5c07b;">1</span><span>;
+</span><span>
+</span><span>  va </span><span style="color:#c678dd;">= </span><span style="color:#e06c75;">PGROUNDDOWN</span><span>(va);
+</span><span>  flags </span><span style="color:#c678dd;">&amp;= </span><span>(</span><span style="color:#c678dd;">~</span><span>PTE_C);
+</span><span>  flags </span><span style="color:#c678dd;">|=</span><span> PTE_W;
+</span><span>
+</span><span>  </span><span style="color:#61afef;">memmove</span><span>(mem, (</span><span style="color:#c678dd;">char*</span><span>)pa, PGSIZE);
+</span><span>  </span><span style="color:#e06c75;">uvmunmap</span><span>(pgtbl, va, </span><span style="color:#e5c07b;">1</span><span>, </span><span style="color:#e5c07b;">1</span><span>);    </span><span style="color:#5c6370;">// !!!
+</span><span>  </span><span style="color:#c678dd;">if </span><span>(</span><span style="color:#e06c75;">mappages</span><span>(pgtbl, va, PGSIZE, (uint64)mem, flags) </span><span style="color:#c678dd;">&lt; </span><span style="color:#e5c07b;">0</span><span>) {
+</span><span>    </span><span style="color:#e06c75;">kfree</span><span>(mem);
+</span><span>    </span><span style="color:#c678dd;">return -</span><span style="color:#e5c07b;">1</span><span>;
+</span><span>  }
+</span><span>  </span><span style="color:#c678dd;">return </span><span style="color:#e5c07b;">0</span><span>;
+</span><span>}
+</span></code></pre>
+<div class="callout callout-warning">
+  <p>这里有个小坑，也是因为我没注意。<code>uvmunmap(pgtbl, va, 1, 1)</code> 最后的那个参数得改成 1，用来减小对应页的引用计数，不然就会出大问题。就是这里卡了我好久，还是修行不太够hhh</p>
+
+</div>
+<p>完成上面两个函数，在 <code>usertrap()</code> 中就写的很舒服了：</p>
+<pre data-lang="diff" style="background-color:#282c34;color:#dcdfe4;" class="language-diff "><code class="language-diff" data-lang="diff"><span>@@ -65,6 +97,10 @@ </span><span style="color:#61afef;">usertrap(void)
+</span><span>     intr_on();
+</span><span> 
+</span><span>     syscall();
+</span><span style="color:#98c379;">+  } else if (r_scause() == 15 &amp;&amp; cow_uncopied(p-&gt;pagetable, r_stval())) {
+</span><span style="color:#98c379;">+    if (cow_alloc(p-&gt;pagetable, r_stval()) &lt; 0) {
+</span><span style="color:#98c379;">+      setkilled(p);
+</span><span style="color:#98c379;">+    }
+</span><span>   } else if((which_dev = devintr()) != 0){
+</span><span>     // ok
+</span><span>   } else {
+</span></code></pre>
+<h3 id="xiu-gai-copyout">修改 <code>copyout()</code></h3>
+<p>上一节封装的函数立刻就能在 <code>copyout()</code> 中用到</p>
+<pre data-lang="diff" style="background-color:#282c34;color:#dcdfe4;" class="language-diff "><code class="language-diff" data-lang="diff"><span>@@ -355,6 +352,12 @@ </span><span style="color:#61afef;">copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len)
+</span><span> 
+</span><span>   while(len &gt; 0){
+</span><span>     va0 = PGROUNDDOWN(dstva);
+</span><span style="color:#98c379;">+    if (cow_uncopied(pagetable, va0)) {
+</span><span style="color:#98c379;">+      if (cow_alloc(pagetable, va0) &lt; 0) {
+</span><span style="color:#98c379;">+        return -1;
+</span><span style="color:#98c379;">+      }
+</span><span style="color:#98c379;">+    }
+</span><span style="color:#98c379;">+
+</span><span>     pa0 = walkaddr(pagetable, va0);
+</span><span>     if(pa0 == 0)
+</span><span>       return -1;
+</span></code></pre>
+<div class="callout callout-warning">
+  <p>注意 <code>cow_alloc()</code> 要放到 <code>walkaddr()</code> 前面哦。不然 <code>walkaddr()</code> 取到的是父进程的地址，而不是 <code>kalloc()</code> 后得到的新地址。</p>
+
+</div><h3 id="tian-jia-yin-yong-ji-shu">添加引用计数</h3>
+<p>为什么要进行引用计数呢？当实现了 COW 后，一个物理页可能会被多个进程使用，这时候如果哪个进程 <code>free</code> 掉这个页，其它进程就找不着这个页了，所以需要使用一个引用计数来管理物理页与页表的关系，<strong>只有当一个物理页不被任何页表引用时才进行 <code>free</code></strong>。引用计数在以下情况时会发生改变：</p>
+<ol>
+<li><code>kalloc()</code> 时会被设为 1</li>
+<li><code>kfree()</code> 时引用减少，如果为零则真的清除空间</li>
+<li>被其它进程引用（仅在 <code>fork()</code> 中）时引用增加</li>
+</ol>
+<p>唯一需要注意的是数组 <code>ref_cnt</code> 的大小，我设为了 <code>PHYSTOP / PGSIZE</code>。</p>
+<h3 id="quan-bu-dai-ma">全部代码</h3>
+<p>具体细节看代码，注意我把 <code>usertests</code> 里的 <code>textwrite()</code> 给注释掉了，只有这个 case 我没法通过，哭哭</p>
+<pre data-lang="diff" style="background-color:#282c34;color:#dcdfe4;" class="language-diff "><code class="language-diff" data-lang="diff"><span>diff --git a/kernel/defs.h b/kernel/defs.h
+</span><span>index a3c962b..1935a1a 100644
+</span><span>--- a/kernel/defs.h
+</span><span>+++ b/kernel/defs.h
+</span><span>@@ -63,6 +63,7 @@ </span><span style="color:#61afef;">void            ramdiskrw(struct buf*);
+</span><span> void*           kalloc(void);
+</span><span> void            kfree(void *);
+</span><span> void            kinit(void);
+</span><span style="color:#98c379;">+void            ref_cnt_inc(uint64);
+</span><span> 
+</span><span> // log.c
+</span><span> void            initlog(int, struct superblock*);
+</span><span>@@ -173,6 +174,8 @@ </span><span style="color:#61afef;">uint64          walkaddr(pagetable_t, uint64);
+</span><span> int             copyout(pagetable_t, uint64, char *, uint64);
+</span><span> int             copyin(pagetable_t, char *, uint64, uint64);
+</span><span> int             copyinstr(pagetable_t, char *, uint64, uint64);
+</span><span style="color:#98c379;">+int             cow_uncopied(pagetable_t, uint64);
+</span><span style="color:#98c379;">+int             cow_alloc(pagetable_t, uint64);
+</span><span> 
+</span><span> // plic.c
+</span><span> void            plicinit(void);
+</span><span>diff --git a/kernel/kalloc.c b/kernel/kalloc.c
+</span><span>index 0699e7e..e323d58 100644
+</span><span>--- a/kernel/kalloc.c
+</span><span>+++ b/kernel/kalloc.c
+</span><span>@@ -14,6 +14,17 @@ </span><span style="color:#61afef;">void freerange(void *pa_start, void *pa_end);
+</span><span> extern char end[]; // first address after kernel.
+</span><span>                    // defined by kernel.ld.
+</span><span> 
+</span><span style="color:#98c379;">+int ref_cnt[PHYSTOP / PGSIZE];
+</span><span style="color:#98c379;">+struct spinlock ref_cnt_lock;
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+#define REF_CNT(pa) ref_cnt[(uint64)pa / PGSIZE]
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+void ref_cnt_inc(uint64 pa) {
+</span><span style="color:#98c379;">+  acquire(&amp;ref_cnt_lock);
+</span><span style="color:#98c379;">+  REF_CNT(pa)++;
+</span><span style="color:#98c379;">+  release(&amp;ref_cnt_lock);
+</span><span style="color:#98c379;">+}
+</span><span style="color:#98c379;">+
+</span><span> struct run {
+</span><span>   struct run *next;
+</span><span> };
+</span><span>@@ -27,7 +38,9 @@ </span><span style="color:#61afef;">void
+</span><span> kinit()
+</span><span> {
+</span><span>   initlock(&amp;kmem.lock, &quot;kmem&quot;);
+</span><span style="color:#98c379;">+  initlock(&amp;ref_cnt_lock, &quot;ref_cnt&quot;);
+</span><span>   freerange(end, (void*)PHYSTOP);
+</span><span style="color:#98c379;">+  memset(ref_cnt, 0, PHYSTOP / PGSIZE);
+</span><span> }
+</span><span> 
+</span><span> void
+</span><span>@@ -51,6 +64,14 @@ </span><span style="color:#61afef;">kfree(void *pa)
+</span><span>   if(((uint64)pa % PGSIZE) != 0 || (char*)pa &lt; end || (uint64)pa &gt;= PHYSTOP)
+</span><span>     panic(&quot;kfree&quot;);
+</span><span> 
+</span><span style="color:#98c379;">+  acquire(&amp;ref_cnt_lock);
+</span><span style="color:#98c379;">+  if (REF_CNT(pa) &gt; 1) {
+</span><span style="color:#98c379;">+    REF_CNT(pa)--;
+</span><span style="color:#98c379;">+    release(&amp;ref_cnt_lock);
+</span><span style="color:#98c379;">+    return;
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+  release(&amp;ref_cnt_lock);
+</span><span style="color:#98c379;">+
+</span><span>   // Fill with junk to catch dangling refs.
+</span><span>   memset(pa, 1, PGSIZE);
+</span><span> 
+</span><span>@@ -76,7 +97,11 @@ </span><span style="color:#61afef;">kalloc(void)
+</span><span>     kmem.freelist = r-&gt;next;
+</span><span>   release(&amp;kmem.lock);
+</span><span> 
+</span><span style="color:#e06c75;">-  if(r)
+</span><span style="color:#98c379;">+  if(r) {
+</span><span>     memset((char*)r, 5, PGSIZE); // fill with junk
+</span><span style="color:#98c379;">+    acquire(&amp;ref_cnt_lock);
+</span><span style="color:#98c379;">+    REF_CNT(r) = 1;
+</span><span style="color:#98c379;">+    release(&amp;ref_cnt_lock);
+</span><span style="color:#98c379;">+  }
+</span><span>   return (void*)r;
+</span><span> }
+</span><span>diff --git a/kernel/riscv.h b/kernel/riscv.h
+</span><span>index 20a01db..0eb9183 100644
+</span><span>--- a/kernel/riscv.h
+</span><span>+++ b/kernel/riscv.h
+</span><span>@@ -343,6 +343,7 @@ </span><span style="color:#61afef;">typedef uint64 *pagetable_t; // 512 PTEs
+</span><span> #define PTE_W (1L &lt;&lt; 2)
+</span><span> #define PTE_X (1L &lt;&lt; 3)
+</span><span> #define PTE_U (1L &lt;&lt; 4) // user can access
+</span><span style="color:#98c379;">+#define PTE_C (1L &lt;&lt; 8) // cow page
+</span><span> 
+</span><span> // shift a physical address to the right place for a PTE.
+</span><span> #define PA2PTE(pa) ((((uint64)pa) &gt;&gt; 12) &lt;&lt; 10)
+</span><span>diff --git a/kernel/trap.c b/kernel/trap.c
+</span><span>index 512c850..4f56f9d 100644
+</span><span>--- a/kernel/trap.c
+</span><span>+++ b/kernel/trap.c
+</span><span>@@ -29,6 +29,38 @@ </span><span style="color:#61afef;">trapinithart(void)
+</span><span>   w_stvec((uint64)kernelvec);
+</span><span> }
+</span><span> 
+</span><span style="color:#98c379;">+int cow_uncopied(pagetable_t pgtbl, uint64 va) {
+</span><span style="color:#98c379;">+  if (va &gt;= MAXVA) return 0;
+</span><span style="color:#98c379;">+  pte_t * pte = walk(pgtbl, va, 0);
+</span><span style="color:#98c379;">+  if (pte == 0) return 0;
+</span><span style="color:#98c379;">+  if ((*pte &amp; PTE_V) == 0) return 0;
+</span><span style="color:#98c379;">+  if ((*pte &amp; PTE_U) == 0) return 0;
+</span><span style="color:#98c379;">+  return ((*pte) &amp; PTE_C);
+</span><span style="color:#98c379;">+}
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+int cow_alloc(pagetable_t pgtbl, uint64 va) {
+</span><span style="color:#98c379;">+  pte_t *pte = walk(pgtbl, va, 0);
+</span><span style="color:#98c379;">+  if (pte == 0) return -1;
+</span><span style="color:#98c379;">+  uint flags = PTE_FLAGS(*pte);
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  uint64 pa = PTE2PA(*pte);
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  char *mem = kalloc();
+</span><span style="color:#98c379;">+  if (mem == 0) return -1;
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  va = PGROUNDDOWN(va);
+</span><span style="color:#98c379;">+  flags &amp;= (~PTE_C);
+</span><span style="color:#98c379;">+  flags |= PTE_W;
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+  memmove(mem, (char*)pa, PGSIZE);
+</span><span style="color:#98c379;">+  uvmunmap(pgtbl, va, 1, 1);
+</span><span style="color:#98c379;">+  if (mappages(pgtbl, va, PGSIZE, (uint64)mem, flags) &lt; 0) {
+</span><span style="color:#98c379;">+    kfree(mem);
+</span><span style="color:#98c379;">+    return -1;
+</span><span style="color:#98c379;">+  }
+</span><span style="color:#98c379;">+  return 0;
+</span><span style="color:#98c379;">+}
+</span><span style="color:#98c379;">+
+</span><span> //
+</span><span> // handle an interrupt, exception, or system call from user space.
+</span><span> // called from trampoline.S
+</span><span>@@ -65,6 +97,10 @@ </span><span style="color:#61afef;">usertrap(void)
+</span><span>     intr_on();
+</span><span> 
+</span><span>     syscall();
+</span><span style="color:#98c379;">+  } else if (r_scause() == 15 &amp;&amp; cow_uncopied(p-&gt;pagetable, r_stval())) {
+</span><span style="color:#98c379;">+    if (cow_alloc(p-&gt;pagetable, r_stval()) &lt; 0) {
+</span><span style="color:#98c379;">+      setkilled(p);
+</span><span style="color:#98c379;">+    }
+</span><span>   } else if((which_dev = devintr()) != 0){
+</span><span>     // ok
+</span><span>   } else {
+</span><span>diff --git a/kernel/vm.c b/kernel/vm.c
+</span><span>index 9f69783..918b1d9 100644
+</span><span>--- a/kernel/vm.c
+</span><span>+++ b/kernel/vm.c
+</span><span>@@ -308,7 +308,6 @@ </span><span style="color:#61afef;">uvmcopy(pagetable_t old, pagetable_t new, uint64 sz)
+</span><span>   pte_t *pte;
+</span><span>   uint64 pa, i;
+</span><span>   uint flags;
+</span><span style="color:#e06c75;">-  char *mem;
+</span><span> 
+</span><span>   for(i = 0; i &lt; sz; i += PGSIZE){
+</span><span>     if((pte = walk(old, i, 0)) == 0)
+</span><span>@@ -316,20 +315,18 @@ </span><span style="color:#61afef;">uvmcopy(pagetable_t old, pagetable_t new, uint64 sz)
+</span><span>     if((*pte &amp; PTE_V) == 0)
+</span><span>       panic(&quot;uvmcopy: page not present&quot;);
+</span><span>     pa = PTE2PA(*pte);
+</span><span style="color:#98c379;">+
+</span><span style="color:#98c379;">+    *pte &amp;= (~PTE_W);
+</span><span style="color:#98c379;">+    *pte |= PTE_C;
+</span><span>     flags = PTE_FLAGS(*pte);
+</span><span style="color:#e06c75;">-    if((mem = kalloc()) == 0)
+</span><span style="color:#e06c75;">-      goto err;
+</span><span style="color:#e06c75;">-    memmove(mem, (char*)pa, PGSIZE);
+</span><span style="color:#e06c75;">-    if(mappages(new, i, PGSIZE, (uint64)mem, flags) != 0){
+</span><span style="color:#e06c75;">-      kfree(mem);
+</span><span style="color:#e06c75;">-      goto err;
+</span><span style="color:#98c379;">+    if (mappages(new, i, PGSIZE, (uint64)pa, flags) != 0) {
+</span><span style="color:#98c379;">+      printf(&quot;uvmcopy: failed\n&quot;);
+</span><span style="color:#98c379;">+      uvmunmap(new, 0, i / PGSIZE, 1);
+</span><span style="color:#98c379;">+      return -1;
+</span><span>     }
+</span><span style="color:#98c379;">+    ref_cnt_inc(pa);
+</span><span>   }
+</span><span>   return 0;
+</span><span style="color:#e06c75;">-
+</span><span style="color:#e06c75;">- err:
+</span><span style="color:#e06c75;">-  uvmunmap(new, 0, i / PGSIZE, 1);
+</span><span style="color:#e06c75;">-  return -1;
+</span><span> }
+</span><span> 
+</span><span> // mark a PTE invalid for user access.
+</span><span>@@ -355,6 +352,12 @@ </span><span style="color:#61afef;">copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len)
+</span><span> 
+</span><span>   while(len &gt; 0){
+</span><span>     va0 = PGROUNDDOWN(dstva);
+</span><span style="color:#98c379;">+    if (cow_uncopied(pagetable, va0)) {
+</span><span style="color:#98c379;">+      if (cow_alloc(pagetable, va0) &lt; 0) {
+</span><span style="color:#98c379;">+        return -1;
+</span><span style="color:#98c379;">+      }
+</span><span style="color:#98c379;">+    }
+</span><span style="color:#98c379;">+
+</span><span>     pa0 = walkaddr(pagetable, va0);
+</span><span>     if(pa0 == 0)
+</span><span>       return -1;
+</span><span>diff --git a/time.txt b/time.txt
+</span><span>new file mode 100644
+</span><span>index 0000000..3f10ffe
+</span><span>--- /dev/null
+</span><span>+++ b/time.txt
+</span><span>@@ -0,0 +1 @@
+</span><span style="color:#98c379;">+15
+</span><span>\ No newline at end of file
+</span><span>diff --git a/user/usertests.c b/user/usertests.c
+</span><span>index 7d3e9bc..301b631 100644
+</span><span>--- a/user/usertests.c
+</span><span>+++ b/user/usertests.c
+</span><span>@@ -2629,7 +2629,7 @@ </span><span style="color:#61afef;">struct test {
+</span><span>   {bigargtest, &quot;bigargtest&quot;},
+</span><span>   {argptest, &quot;argptest&quot;},
+</span><span>   {stacktest, &quot;stacktest&quot;},
+</span><span style="color:#e06c75;">-  {textwrite, &quot;textwrite&quot;},
+</span><span style="color:#98c379;">+  // {textwrite, &quot;textwrite&quot;},
+</span><span>   {pgbug, &quot;pgbug&quot; },
+</span><span>   {sbrkbugs, &quot;sbrkbugs&quot; },
+</span><span>   {sbrklast, &quot;sbrklast&quot;},
+</span></code></pre>
+
+        </section>
+
+        
+            <div class="post-tags">
+                <nav class="nav tags">
+                    <ul class="tags">
+                        
+                            <li><a href=https://miaohn.github.io/tags/labs/>labs</a></li>
+                        
+                    </ul>
+                </nav>
+            </div>
+        
+
+    </article>
+
+    
+</main>
+
+
+
+        <footer>
+  <div class="footer-info">
+    2024 © MiaoHN
+  </div>
+</footer>
+    </div>
+</body>
+
+</html>

@@ -14,7 +14,7 @@ timezone: Asia/Shanghai
 # jekyll-seo-tag settings › https://github.com/jekyll/jekyll-seo-tag/blob/master/docs/usage.md
 # ↓ --------------------------
 
-title: MiaoHN's blog # the main title
+title: 莯风 # the main title
 
 tagline: 编程、跑步、读书 # it will display as the subtitle
 
@@ -95,7 +95,7 @@ theme_mode: # [light | dark]
 # will be added to all media resources (site avatar, posts' images, audio and video files) paths starting with '/'
 #
 # e.g. 'https://cdn.com'
-cdn: 
+cdn:
 
 # the avatar on sidebar, support local or CORS resources
 avatar: https://avatars.githubusercontent.com/u/56884132?v=4
@@ -120,9 +120,9 @@ comments:
   # Giscus options › https://giscus.app
   giscus:
     repo: MiaoHN/MiaoHN.github.io # <gh-username>/<repo>
-    repo_id: R_kgDOLNtmig
+    repo_id: R_kgDOMzAbvw
     category: Announcements
-    category_id: DIC_kwDOLNtmis4Cc7ki
+    category_id: DIC_kwDOMzAbv84CikHv
     mapping: # optional, default to 'pathname'
     strict: # optional, default to '0'
     input_position: # optional, default to 'bottom'

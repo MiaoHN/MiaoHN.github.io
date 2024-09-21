@@ -4,7 +4,7 @@ date: 2023-12-07
 
 
 
-categories: ["paper"]
+categories: ["Paper Reading"]
 math: true
 tags: ["paper", "RES", "Co-SOD", "segmentation"]
 

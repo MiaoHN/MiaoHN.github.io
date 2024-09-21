@@ -2,7 +2,7 @@
 title: "Paper | Multimodal Learning with Transformers: A Survey"
 date: 2023-11-28
 
-categories: ["paper"]
+categories: ["Paper Reading"]
 math: true
 tags: ["paper"]
 ---

@@ -2,7 +2,7 @@
 title: "Paper | CLIP 笔记 ＆ 系列论文串烧"
 date: 2023-12-01
 
-categories: ["paper"]
+categories: ["Paper Reading"]
 math: true
 tags: ["paper", "multimodal", "CLIP"]
 

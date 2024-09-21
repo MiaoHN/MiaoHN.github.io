@@ -1,6 +1,7 @@
 ---
 title: "编译原理实验 01 | 初识 Cool 语言"
 date: 2022-05-29 19:27:40 +0800
+categories: ["Courses & Labs", "XJTU 编译原理"]
 tags: ["labs"]
 ---
 

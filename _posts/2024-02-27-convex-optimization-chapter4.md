@@ -1,13 +1,9 @@
 ---
 title: "Notes | Convex Optimization | Chapter4 Convex optimization problems"
 date: 2024-02-27
-
-
-
-categories: ["notes"]
+categories: ["Notes", "Convex Optimization"]
 math: true
 tags: ["notes", "convex-optimization"]
-
 ---
 
 ## 4.1 Optimization problems

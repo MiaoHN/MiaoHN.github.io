@@ -4,7 +4,7 @@ date: 2024-02-06
 
 
 
-categories: ["notes"]
+categories: ["Notes", "Convex Optimization"]
 math: true
 tags: ["notes", "convex-optimization"]
 

@@ -4,7 +4,7 @@ date: 2024-05-30
 
 
 
-categories: ["paper"]
+categories: ["Paper Reading"]
 math: true
 tags: ["paper"]
 

@@ -1,13 +1,9 @@
 ---
 title: "Notes | Convex Optimization | Chapter3 Convex functions"
 date: 2024-02-22
-
-
-
-categories: ["notes"]
+categories: ["Notes", "Convex Optimization"]
 math: true
 tags: ["notes", "convex-optimization"]
-
 ---
 
 ## 3.1 Basic properties and examples

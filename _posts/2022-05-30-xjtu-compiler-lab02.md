@@ -1,6 +1,7 @@
 ---
 title: "编译原理实验 02 | Cool 语言堆栈机"
 date: 2022-05-30 19:31:54 +0800
+categories: ["Courses & Labs", "XJTU 编译原理"]
 tags: ["labs"]
 ---
 

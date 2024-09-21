@@ -1,10 +1,7 @@
 ---
 title: "Explainable AI (XAI): A systematic meta-survey of ..."
 date: 2024-05-25
-
-
-
-categories: ["Study"]
+categories: ["Paper Reading"]
 math: true
 tags: ["paper"]
 ---

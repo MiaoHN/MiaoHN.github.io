@@ -1,6 +1,7 @@
 ---
 title: "编译原理实验 03 | 词法分析"
 date: 2022-05-31 19:36:36 +0800
+categories: ["Courses & Labs", "XJTU 编译原理"]
 tags: ["labs"]
 ---
 

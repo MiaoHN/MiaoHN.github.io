@@ -4,7 +4,7 @@ date: 2023-12-06
 
 
 
-categories: ["paper"]
+categories: ["Paper Reading"]
 math: true
 tags: ["paper", "segmentation"]
 ---

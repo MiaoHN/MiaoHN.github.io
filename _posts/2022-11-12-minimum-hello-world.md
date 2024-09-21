@@ -430,4 +430,4 @@ $ xxd hello_world
 - [GCC and Make Compiling, Linking and Building C/C++ Applications](https://www3.ntu.edu.sg/home/ehchua/programming/cpp/gcc_make.html)
 - [编写一个最小的 64 位 Hello World](https://cjting.me/2020/12/10/tiny-x64-helloworld/#tiny-native)
 - [sourcedennis/small-hello-world](https://github.com/sourcedennis/small-hello-world)
-- [A Whirlwind Tutorial on Creating Really Teensy ELF Executables for Linux](http://www.muppetlabs.com/~breadbox/software/tiny/teensy.html)
+- [A Whirlwind Tutorial on Creating Really Teensy ELF Executables for Linux](https://www.muppetlabs.com/~breadbox/software/tiny/teensy.html)

@@ -13,6 +13,7 @@ order: 4
 
 ## Changelog
 
+- 2024-10-16 - 将字体更改为 `Noto Serif SC`
 - 2024-09-21 - 将 CSDN 上之前写的部分的文章迁过来
 - 2024-09-18 - 迁到 Jekyll 的 Chirpy 主题博客
 - 2024-09-17 - 开启 [Running Page](https://miaohn.github.io/running_page)

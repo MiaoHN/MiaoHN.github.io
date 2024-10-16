@@ -217,6 +217,7 @@ exclude:
   - LICENSE
   - "*.config.js"
   - package*.json
+  - docker-compose.yml
 
 jekyll-archives:
   enabled: [categories, tags]

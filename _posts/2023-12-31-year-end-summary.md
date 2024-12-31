@@ -3,6 +3,7 @@ title: "2023 年终总结"
 description: "这一年一年的过的可真快，2023 年又要过去了。既然想要好好写博客，那就从年度总结开始吧！"
 date: 2023-12-31T18:00:00+08:00
 math: true
+categories: ["Summary", "Yearly"]
 tags: ["life"]
 ---
 

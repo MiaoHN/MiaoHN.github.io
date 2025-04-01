@@ -4,10 +4,7 @@ icon: fas fa-info-circle
 order: 4
 ---
 
-> 上次更新于：2025-03-31
-{: .prompt-info }
-
-一名研究生
+你好👋，我是 MiaoHN，来自 🌍。欢迎来到我的主页。
 
 ## Changelog
 

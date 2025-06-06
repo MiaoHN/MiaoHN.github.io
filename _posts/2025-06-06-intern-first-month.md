@@ -8,7 +8,7 @@ tags: ["life"]
 image: "https://cdn.jsdelivr.net/gh/MiaoHN/image-host@master/images/2025/5f6d09d532cb34fae517ec134a388fd8.jpg"
 ---
 
-> 图片拍摄于 2025 年 6 月 1 日，元宵节
+> 图片拍摄于 2025 年 6 月 1 日，端午节
 
 看了下我居然已经有两个月没写过东西了，今天就来记录一下这段时间我实习的感受吧
 
